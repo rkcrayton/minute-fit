@@ -23,7 +23,7 @@ export default function ScanRecord() {
   const [running, setRunning] = useState(false);
   const [videoUri, setVideoUri] = useState<string | null>(null);
 
-  // ✅ NEW: camera readiness
+  // NEW: camera readiness
   const [cameraReady, setCameraReady] = useState(false);
 
   // (optional) track if recordAsync is in-flight
@@ -66,7 +66,7 @@ export default function ScanRecord() {
     const camOk = permission.granted ? true : (await requestPermission()).granted;
     if (!camOk) return false;
 
-    // ✅ mic is required for video recording on iOS in many cases
+    // mic is required for video recording on iOS in many cases
     if (!micPermission) return false;
     const micOk = micPermission.granted ? true : (await requestMicPermission()).granted;
     if (!micOk) return false;
