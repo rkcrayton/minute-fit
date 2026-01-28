@@ -1,11 +1,10 @@
-import { Image } from 'react-native';
-import tw from 'twrnc';
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WorkoutCard } from '@/components/workout-card';
-import { ProgressRing } from '@/components/progress-ring';
+import ParallaxScrollView from "@/components/parallax-scroll-view";
+import { ProgressRing } from "@/components/progress-ring";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { WorkoutCard } from "@/components/workout-card";
+import { Image } from "react-native";
+import tw from "twrnc";
 
 export default function HomeScreen() {
   // Example stats (replace with state/props later)
@@ -14,10 +13,10 @@ export default function HomeScreen() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
       headerImage={
         <Image
-          source={require('@/assets/images/stopwatch.png')}
+          source={require("@/assets/images/stopwatch.png")}
           style={tw`absolute bottom-0 left-0 h-60 w-64`}
         />
       }
@@ -32,7 +31,7 @@ export default function HomeScreen() {
         title="Push Ups"
         duration="1 Minute"
         description="To target your chest, do some push ups."
-        onPress={() => alert('Start 1-minute workout!')}
+        onPress={() => alert("Start 1-minute workout!")}
       />
 
       {/* Daily Stats */}
