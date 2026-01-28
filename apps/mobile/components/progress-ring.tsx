@@ -1,10 +1,9 @@
-import React from 'react';
-import { View } from 'react-native';
-import tw from 'twrnc';
-import Svg, { Circle } from 'react-native-svg';
-import { ThemedView } from '@/components/themed-view';
-import { ThemedText } from '@/components/themed-text';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { View } from "react-native";
+import Svg, { Circle } from "react-native-svg";
+import tw from "twrnc";
 
 export type ProgressRingProps = {
   value: number;
@@ -21,10 +20,16 @@ export function ProgressRing({
   size = 120,
   strokeWidth = 10,
   label,
-  unit = '',
+  unit = "",
 }: ProgressRingProps) {
-  const progressColor = useThemeColor({ light: '#1D4ED8', dark: '#3B82F6' }, 'tint');
-  const trackColor = useThemeColor({ light: '#E5E7EB', dark: '#374151' }, 'icon');
+  const progressColor = useThemeColor(
+    { light: "#1D4ED8", dark: "#3B82F6" },
+    "tint",
+  );
+  const trackColor = useThemeColor(
+    { light: "#E5E7EB", dark: "#374151" },
+    "icon",
+  );
 
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -33,7 +38,12 @@ export function ProgressRing({
 
   return (
     <ThemedView style={tw`items-center`}>
-      <View style={[tw`relative justify-center items-center`, { width: size, height: size }]}>
+      <View
+        style={[
+          tw`relative justify-center items-center`,
+          { width: size, height: size },
+        ]}
+      >
         <Svg width={size} height={size}>
           {/* Background circle */}
           <Circle
