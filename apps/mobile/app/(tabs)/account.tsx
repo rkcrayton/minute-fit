@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   settingsContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#E0F2FE',
     borderRadius: 20,
     padding: 20,
     margin: 20,
