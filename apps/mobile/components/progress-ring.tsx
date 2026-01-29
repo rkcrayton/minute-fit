@@ -12,6 +12,7 @@ export type ProgressRingProps = {
   strokeWidth?: number;
   label: string;
   unit?: string;
+  showTrack?: boolean;
 };
 
 export function ProgressRing({
@@ -21,6 +22,7 @@ export function ProgressRing({
   strokeWidth = 10,
   label,
   unit = "",
+  showTrack = false,
 }: ProgressRingProps) {
   const progressColor = useThemeColor(
     { light: "#1D4ED8", dark: "#3B82F6" },
@@ -37,7 +39,7 @@ export function ProgressRing({
   const strokeDashoffset = circumference - progress * circumference;
 
   return (
-    <ThemedView style={tw`items-center`}>
+    <ThemedView style={[tw`items-center`, { backgroundColor: 'transparent' }]}>
       <View
         style={[
           tw`relative justify-center items-center`,
@@ -45,15 +47,17 @@ export function ProgressRing({
         ]}
       >
         <Svg width={size} height={size}>
-          {/* Background circle */}
-          <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke={trackColor}
-            strokeWidth={strokeWidth}
-            fill="none"
-          />
+          {/* Background circle - only show if showTrack is true */}
+          {showTrack && (
+            <Circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke={trackColor}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          )}
           {/* Progress circle */}
           <Circle
             cx={size / 2}

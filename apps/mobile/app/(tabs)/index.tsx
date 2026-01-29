@@ -1,53 +1,85 @@
-import ParallaxScrollView from "@/components/parallax-scroll-view";
-import { ProgressRing } from "@/components/progress-ring";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { WorkoutCard } from "@/components/workout-card";
-import { Image } from "react-native";
+import {
+  GreetingHeader,
+  StartNowButton,
+  NextWorkoutCard,
+  TodayProgress,
+  QuickPicks,
+  RecentWorkouts,
+  type Workout,
+} from "@/components/home";
+import { ScrollView } from "react-native";
 import tw from "twrnc";
 
 export default function HomeScreen() {
-  // Example stats (replace with state/props later)
-  const totalWorkoutsDone = 3;
-  const totalMinutes = 7;
+  // Mock data - replace with actual state/API calls later
+  const userName = "Luke";
+  const streakDays = 5;
+  const workoutsDone = 4;
+  const workoutsGoal = 5;
+  const minutesDone = 18;
+  const minutesGoal = 30;
+
+  const recentWorkouts: Workout[] = [
+    { name: "Mobility", duration: "2 min" },
+    { name: "Core", duration: "1 min" },
+    { name: "Walk", duration: "2 min", category: "Cardio" },
+  ];
+
+  const handleStartNow = () => {
+    console.log("Start quick workout");
+    // TODO: Navigate to workout screen or start quick workout flow
+  };
+
+  const handleStartWorkout = () => {
+    console.log("Start next workout");
+    // TODO: Navigate to workout detail/start screen
+  };
+
+  const handleSwapWorkout = () => {
+    console.log("Swap workout");
+    // TODO: Show workout picker or swap to different workout
+  };
+
+  const handleQuickPick = (type: "reset" | "stretch" | "cardio" | "strength") => {
+    console.log(`Quick pick: ${type}`);
+    // TODO: Start corresponding quick workout
+  };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/stopwatch.png")}
-          style={tw`absolute bottom-0 left-0 h-60 w-64`}
-        />
-      }
-    >
-      {/* Title */}
-      <ThemedView style={tw`flex-row items-center gap-2 mb-6`}>
-        <ThemedText type="title">GottaMinute</ThemedText>
-      </ThemedView>
+    <ScrollView style={tw`flex-1 bg-white dark:bg-gray-900`}>
+      <ScrollView style={tw`p-4 pt-6`}>
+        {/* Greeting Header */}
+        <GreetingHeader userName={userName} streakDays={streakDays} />
 
-      {/* Next Workout Card */}
-      <WorkoutCard
-        title="Push Ups"
-        duration="1 Minute"
-        description="To target your chest, do some push ups."
-        onPress={() => alert("Start 1-minute workout!")}
-      />
+        {/* Start Now Button */}
+        <StartNowButton onPress={handleStartNow} />
 
-      {/* Daily Stats */}
-      <ThemedView style={tw`flex-row justify-around mb-6`}>
-        <ProgressRing
-          value={totalWorkoutsDone}
-          maxValue={10}
-          label="Workouts Done"
+        {/* Next Workout Card */}
+        <NextWorkoutCard
+          title="Push Ups"
+          duration="1 min"
+          category="Chest"
+          difficulty="Medium"
+          equipment="No equipment"
+          onStart={handleStartWorkout}
+          onSwap={handleSwapWorkout}
         />
-        <ProgressRing
-          value={totalMinutes}
-          maxValue={60}
-          label="Minutes"
-          unit="min"
+
+        {/* Today's Progress */}
+        <TodayProgress
+          workoutsDone={workoutsDone}
+          workoutsGoal={workoutsGoal}
+          minutesDone={minutesDone}
+          minutesGoal={minutesGoal}
+          showStreakRing={false}
         />
-      </ThemedView>
-    </ParallaxScrollView>
+
+        {/* Quick Picks */}
+        <QuickPicks onPress={handleQuickPick} />
+
+        {/* Recent Workouts */}
+        <RecentWorkouts workouts={recentWorkouts} />
+      </ScrollView>
+    </ScrollView>
   );
 }
