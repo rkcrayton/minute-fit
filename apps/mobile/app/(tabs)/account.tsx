@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
   goalText:{
     fontSize: 20,
     fontWeight: 'bold',
+    color: 'white',
   },
   settingsContainer: {
     backgroundColor: '#E0F2FE',
