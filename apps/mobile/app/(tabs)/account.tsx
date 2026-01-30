@@ -7,7 +7,6 @@ import ScrollView = Animated.ScrollView;
 
 export default function AccountScreen() {
   return (
-
       <SafeAreaView style={styles.container} edges={['top','left','right']}>
         <ThemedView style={[styles.container,{paddingTop: 20, position:'relative'}]}>
             <ScrollView contentContainerStyle={{}}>
@@ -84,6 +83,13 @@ export default function AccountScreen() {
                     onPress={() => {alert("Payment Method Pressed")}}
                 >
                   <ThemedText style={styles.settingsItemText}>Payment Method</ThemedText>
+                  <ThemedText style={styles.settingsItemText}>›</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.settingsItem}
+                  onPress={() => {alert("My Gear Pressed")}}
+                  >
+                  <ThemedText style={styles.settingsItemText}>My Gear</ThemedText>
                   <ThemedText style={styles.settingsItemText}>›</ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity
