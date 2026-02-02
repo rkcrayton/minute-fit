@@ -196,7 +196,7 @@ export default function ScanRecord() {
       <Pressable
         style={[
           styles.primaryBtn,
-          { backgroundColor: isDark ? "#FFFFFF" : "#111111" },
+          { backgroundColor: "#3B82F6" },
           (running || starting) && { backgroundColor: "#ffe9e9" },
           !canStart && !running && !starting && { opacity: 0.45 },
         ]}
@@ -206,7 +206,7 @@ export default function ScanRecord() {
         <Text
           style={[
             styles.primaryText,
-            { color: (running || starting) ? "#111111" : (isDark ? "#111111" : "#FFFFFF") },
+            { color: (running || starting) ? "#111111" : "#FFFFFF" },
           ]}
         >
           {starting ? "Starting…" : running ? "Stop" : "Start 60s Recording"}
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.25)",
     overflow: "hidden",
   },
-  progressFill: { height: 10, backgroundColor: "#fff" },
+  progressFill: { height: 10, backgroundColor: "#3B82F6" },
   time: { width: 52, textAlign: "right", fontWeight: "900", color: "#fff" },
 
   statusText: { color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 4 },

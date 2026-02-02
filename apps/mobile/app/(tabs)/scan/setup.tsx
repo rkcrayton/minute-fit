@@ -48,7 +48,7 @@ export default function ScanSetup() {
                 styles.row,
                 { borderColor: border, backgroundColor: cardBg },
                 isChecked && {
-                  borderColor: isDark ? "rgba(255,255,255,0.35)" : "#111111",
+                  borderColor: "#3B82F6",
                 },
               ]}
               onPress={() => setChecked((p) => ({ ...p, [i.key]: !p[i.key] }))}
@@ -58,8 +58,8 @@ export default function ScanSetup() {
                   styles.checkbox,
                   { borderColor: isDark ? "rgba(255,255,255,0.5)" : "#111111" },
                   isChecked && {
-                    backgroundColor: isDark ? "#FFFFFF" : "#111111",
-                    borderColor: isDark ? "#FFFFFF" : "#111111",
+                    backgroundColor: "#3B82F6",
+                    borderColor: "#3B82F6",
                   },
                 ]}
               >
@@ -83,7 +83,7 @@ export default function ScanSetup() {
         disabled={!allChecked}
         style={[
           styles.primaryBtn,
-          { backgroundColor: isDark ? "#FFFFFF" : "#111111" },
+          { backgroundColor: "#3B82F6" },
           !allChecked && styles.primaryBtnDisabled,
         ]}
         onPress={() => router.push("/(tabs)/scan/record")}
@@ -91,7 +91,7 @@ export default function ScanSetup() {
         <Text
           style={[
             styles.primaryText,
-            { color: isDark ? "#111111" : "#FFFFFF" },
+            { color: "#FFFFFF" },
           ]}
         >
           Continue

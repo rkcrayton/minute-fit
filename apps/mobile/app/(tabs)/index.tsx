@@ -7,10 +7,13 @@ import {
   RecentWorkouts,
   type Workout,
 } from "@/components/home";
-import { ScrollView } from "react-native";
+import { ScrollView, useColorScheme } from "react-native";
 import tw from "twrnc";
 
 export default function HomeScreen() {
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+
   // Mock data - replace with actual state/API calls later
   const userName = "Luke";
   const streakDays = 5;
@@ -46,40 +49,41 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView style={tw`flex-1 bg-white dark:bg-gray-900`}>
-      <ScrollView style={tw`p-4 pt-6`}>
-        {/* Greeting Header */}
-        <GreetingHeader userName={userName} streakDays={streakDays} />
+    <ScrollView
+      style={[tw`flex-1`, { backgroundColor: isDark ? "#111827" : "#FFFFFF" }]}
+      contentContainerStyle={tw`p-4 pt-10`}
+    >
+      {/* Greeting Header */}
+      <GreetingHeader userName={userName} streakDays={streakDays} />
 
-        {/* Start Now Button */}
-        <StartNowButton onPress={handleStartNow} />
+      {/* Start Now Button */}
+      <StartNowButton onPress={handleStartNow} />
 
-        {/* Next Workout Card */}
-        <NextWorkoutCard
-          title="Push Ups"
-          duration="1 min"
-          category="Chest"
-          difficulty="Medium"
-          equipment="No equipment"
-          onStart={handleStartWorkout}
-          onSwap={handleSwapWorkout}
-        />
+      {/* Next Workout Card */}
+      <NextWorkoutCard
+        title="Push Ups"
+        duration="1 min"
+        category="Chest"
+        difficulty="Medium"
+        equipment="No equipment"
+        onStart={handleStartWorkout}
+        onSwap={handleSwapWorkout}
+      />
 
-        {/* Today's Progress */}
-        <TodayProgress
-          workoutsDone={workoutsDone}
-          workoutsGoal={workoutsGoal}
-          minutesDone={minutesDone}
-          minutesGoal={minutesGoal}
-          showStreakRing={false}
-        />
+      {/* Today's Progress */}
+      <TodayProgress
+        workoutsDone={workoutsDone}
+        workoutsGoal={workoutsGoal}
+        minutesDone={minutesDone}
+        minutesGoal={minutesGoal}
+        showStreakRing={false}
+      />
 
-        {/* Quick Picks */}
-        <QuickPicks onPress={handleQuickPick} />
+      {/* Quick Picks */}
+      <QuickPicks onPress={handleQuickPick} />
 
-        {/* Recent Workouts */}
-        <RecentWorkouts workouts={recentWorkouts} />
-      </ScrollView>
+      {/* Recent Workouts */}
+      <RecentWorkouts workouts={recentWorkouts} />
     </ScrollView>
   );
 }

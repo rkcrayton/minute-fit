@@ -22,7 +22,7 @@ export default function Analyzing() {
 
   return (
     <View style={[styles.container, { backgroundColor: isDark ? "#0B0B0F" : "#FFFFFF" }]}>
-      <ActivityIndicator size="large" />
+      <ActivityIndicator size="large" color="#3B82F6" />
       <Text style={[styles.title, { color: isDark ? "#FFFFFF" : "#111111" }]}>
         Analyzing your scan…
       </Text>

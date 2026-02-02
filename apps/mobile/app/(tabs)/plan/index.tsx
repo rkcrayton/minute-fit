@@ -70,7 +70,7 @@ function PlanCard({ plan }: { plan: WorkoutPlan }) {
         ))}
       </ThemedView>
 
-      <ThemedText style={styles.cta}>Tap to view details →</ThemedText>
+      <ThemedText style={[styles.cta, { color: "#3B82F6" }]}>Tap to view details →</ThemedText>
     </Pressable>
   );
 }

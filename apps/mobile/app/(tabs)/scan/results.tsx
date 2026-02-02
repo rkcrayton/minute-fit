@@ -63,10 +63,10 @@ export default function Results() {
       </View>
 
       <Pressable
-        style={[styles.primaryBtn, { backgroundColor: isDark ? "#FFFFFF" : "#111111" }]}
+        style={[styles.primaryBtn, { backgroundColor: "#3B82F6" }]}
         onPress={() => router.push("/(tabs)/plan")}
       >
-        <Text style={[styles.primaryText, { color: isDark ? "#111111" : "#FFFFFF" }]}>
+        <Text style={[styles.primaryText, { color: "#FFFFFF" }]}>
           Update My Plan
         </Text>
       </Pressable>

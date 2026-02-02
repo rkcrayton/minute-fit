@@ -19,14 +19,14 @@ export default function ScanIndex() {
       <Pressable
         style={[
           styles.primaryBtn,
-          { backgroundColor: isDark ? "#FFFFFF" : "#111111" },
+          { backgroundColor: "#3B82F6" },
         ]}
         onPress={() => router.push("/(tabs)/scan/setup")}
       >
         <Text
           style={[
             styles.primaryText,
-            { color: isDark ? "#111111" : "#FFFFFF" },
+            { color: "#FFFFFF" },
           ]}
         >
           Start Scan
