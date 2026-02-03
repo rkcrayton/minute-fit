@@ -1,21 +1,15 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from database import engine, Base
+from routers import users
 
-app = FastAPI(title="Minute Fit API")
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
-# Allow Expo dev clients
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # tighten later
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI(title="Gotta Minute Fitness API")
 
-@app.get("/health")
-def health():
-    return {"ok": True}
+app.include_router(users.router)
 
 @app.get("/")
 def root():
-    return {"service": "minute-fit-api"}
+    return {"message": "Welcome to Gotta Minute Fitness API"}
+
