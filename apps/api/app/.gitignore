@@ -1,0 +1,11 @@
+#environment file
+.env
+
+#database
+gotta_minute.db
+
+#Other file
+test_main.http
+
+#virtual environment
+.venv/
