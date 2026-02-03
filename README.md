@@ -56,8 +56,8 @@ docker compose down -v
 ```
 
 ### Run the Expo Frontend
-```bash
 From the repo root:
+```bash
 cd apps/mobile
 npm install
 npx expo start
@@ -67,6 +67,7 @@ Then:
 - Press a → Android emulator
 - Press i → iOS simulator (macOS)
 - Or scan QR code with Expo Go on your phone
+
 
 ### Environment Variables
 You will need to set up an `.env` file to properly connect the Docker services together.  
