@@ -21,7 +21,7 @@ services:
 
   api:
     build:
-      context: ./apps/api/app
+      context: ./apps/api
       dockerfile: Dockerfile
     container_name: minute_fit_api
     restart: unless-stopped
