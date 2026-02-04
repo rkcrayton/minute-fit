@@ -6,10 +6,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     PORT: int = 8000
     DEBUG: bool = True
-    SQLALCHEMY_DATABASE_URL: str
+    DATABASE_URL: str
 
     class Config:
-        env_file = ".env"
+        env_file = "../../../.env"
 
 
 settings = Settings()
