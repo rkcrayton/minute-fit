@@ -9,9 +9,19 @@ You will also need to create a .env file for your own environment.
 
 `touch .env`
 
+`echo POSTGRES_USER= YOUR-USER`
+
+`echo POSTGRES_PASSWORD=YOUR-SECURE_PASSY`
+
+`echo POSTGRES_DB=gotta_minute_fitness`
+
+`echo POSTGRES_PORT=5432`
+
 `echo SECRET_KEY='Your-Secert'`
 
 `echo SQLALCHEMY_DATABASE_URL='Your-db-url'`
+
+
 
 These are the only two variables I use throughout my code as we add more stuff more environment variables may be needed.
 
@@ -35,3 +45,4 @@ run:
 `python -m uvicorn main:app --reload` 
 
 This will also spin up the backend but it won't be in docker
+

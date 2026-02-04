@@ -21,7 +21,7 @@ services:
 
   api:
     build:
-      context: ./apps/api
+      context: ./apps/api/app
       dockerfile: Dockerfile
     container_name: minute_fit_api
     restart: unless-stopped
@@ -29,13 +29,16 @@ services:
       - .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
     ports:
       - "${API_PORT}:8000"
     volumes:
-      - ./apps/api:/app
+      - ./apps/api/app:/app
     depends_on:
       db:
         condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
   pgdata:

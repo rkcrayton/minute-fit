@@ -1,5 +1,5 @@
 #environment file
-.env
+../../../.env
 
 #database
 gotta_minute.db
