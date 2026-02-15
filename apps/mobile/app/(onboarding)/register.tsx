@@ -41,7 +41,6 @@ export default function Register() {
     setLoading(true);
     try {
       await register({ email, username, password });
-      // Account created and logged in — continue to profile onboarding
       router.push("/(onboarding)/profile" as any);
     } catch (error: any) {
       const message =
