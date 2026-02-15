@@ -15,7 +15,7 @@ type PoseKeypoint = {
 export default function MoveNetScreen() {
   const cameraRef = useRef<CameraView>(null);
 
-  // ✅ New Expo Camera permission API
+  // New Expo Camera permission API
   const [permission, requestPermission] = useCameraPermissions();
 
   const [tfReady, setTfReady] = useState(false);
