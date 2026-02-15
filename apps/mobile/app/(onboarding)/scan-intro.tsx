@@ -21,14 +21,14 @@ export default function ScanIntro() {
           1-Minute Body Scan
         </Text>
         <Text style={[styles.subtitle, { color: subtext }]}>
-          Let's see how you move. We'll guide you through a quick recording so
+          Let&#39;s see how you move. We&#39;ll guide you through a quick recording so
           we can build your personalized plan.
         </Text>
 
         <View
           style={[styles.card, { borderColor: border, backgroundColor: cardBg }]}
         >
-          <Text style={[styles.cardTitle, { color: text }]}>What you'll do</Text>
+          <Text style={[styles.cardTitle, { color: text }]}>What you&#39;ll do</Text>
           <Text style={[styles.cardItem, { color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.75)" }]}>
             • Stand still (10s)
           </Text>

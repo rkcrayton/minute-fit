@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useOnboarding } from "@/contexts/onboarding";
+import api from "@/services/api";
 
 export default function Profile() {
   const scheme = useColorScheme();
@@ -35,8 +36,23 @@ export default function Profile() {
     heightInches.trim().length > 0 &&
     weight.trim().length > 0;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setUserProfile({ name: name.trim(), heightFeet, heightInches, weight });
+
+    // Convert height to total inches and send to backend
+    const totalInches =
+      parseInt(heightFeet) * 12 + parseInt(heightInches);
+
+    try {
+      await api.put("/users/me", {
+        name: name.trim(),
+        height: totalInches,
+        weight: parseFloat(weight),
+      });
+    } catch (error) {
+      console.warn("Failed to save profile to server:", error);
+    }
+
     router.push("/(onboarding)/scan-intro" as any);
   };
 
