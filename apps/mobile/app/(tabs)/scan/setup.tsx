@@ -86,7 +86,7 @@ export default function ScanSetup() {
           { backgroundColor: "#3B82F6" },
           !allChecked && styles.primaryBtnDisabled,
         ]}
-        onPress={() => router.push("/(tabs)/scan/record")}
+        onPress={() => router.push("/(tabs)/scan/movenet")}
       >
         <Text
           style={[
