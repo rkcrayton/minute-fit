@@ -23,6 +23,7 @@ export default function ScanStackLayout() {
           gestureEnabled: false,
         }}
       />
+      <Stack.Screen name="movenet" options={{ title: "Scan" }} />
       <Stack.Screen
         name="results"
         options={{
