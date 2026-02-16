@@ -1,19 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { NativeModules, Platform } from "react-native";
 
-// -- WHY WE ACCESS NativeModules DIRECTLY --
-// react-native-health's index.js does this:
-//   const { AppleHealthKit } = require('react-native').NativeModules
-//   export const HealthKit = Object.assign({}, AppleHealthKit, { Constants: {...} })
-//
-// If the native module isn't loaded yet when that runs, AppleHealthKit is undefined,
-// and Object.assign({}, undefined, ...) silently drops all the methods.
-// So we grab it directly from NativeModules ourselves.
-
 const AppleHealthKit = NativeModules.AppleHealthKit;
 
-// Permission constants — these string values match what the native module expects.
-// They come from react-native-health's src/constants/Permissions.js
 const STEP_COUNT = "StepCount";
 const ACTIVE_ENERGY = "ActiveEnergyBurned";
 
@@ -32,7 +21,6 @@ export function useHealthData() {
 
   const isAvailable = Platform.OS === "ios" && AppleHealthKit != null;
 
-  // Fetch today's data from HealthKit
   const fetchData = useCallback(() => {
     if (!AppleHealthKit) return;
 
@@ -41,7 +29,6 @@ export function useHealthData() {
 
     setIsLoading(true);
 
-    // getStepCount — returns total steps for the given date
     AppleHealthKit.getStepCount(
       { date: today.toISOString() },
       (err: any, results: { value: number }) => {
@@ -50,8 +37,6 @@ export function useHealthData() {
         }
       },
     );
-
-    // getActiveEnergyBurned — returns array of calorie samples for date range
     AppleHealthKit.getActiveEnergyBurned(
       {
         startDate: today.toISOString(),
@@ -67,7 +52,6 @@ export function useHealthData() {
     );
   }, []);
 
-  // Request permission — triggers the native iOS health permission popup
   const requestPermission = useCallback(() => {
     if (!isAvailable) return;
 
@@ -81,8 +65,6 @@ export function useHealthData() {
     });
   }, [isAvailable, fetchData]);
 
-  // On mount, try to initialize silently.
-  // If the user already granted permission, this succeeds with no popup.
   useEffect(() => {
     if (!isAvailable) return;
 
