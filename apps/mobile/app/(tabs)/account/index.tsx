@@ -1,8 +1,9 @@
 import { ScrollView, useColorScheme, Alert } from "react-native";
 import { router } from "expo-router";
-import { AccountHeader, GoalCards, Settings, HealthPermissionCard, type Goal, type SettingsItem } from "@/components/account";
+import { AccountHeader, GoalCards, Settings, type Goal, type SettingsItem } from "@/components/account";
 import { useAuth } from "@/contexts/auth";
 import { useOnboarding } from "@/contexts/onboarding";
+import { useHealthData } from "@/hooks/use-health-data";
 import tw from "twrnc";
 
 export default function AccountScreen() {
@@ -10,17 +11,20 @@ export default function AccountScreen() {
   const isDark = scheme === "dark";
   const { user, logout } = useAuth();
   const { setOnboarded } = useOnboarding();
+  const { steps, activeEnergy, isAuthorized } = useHealthData();
 
+  // Goal cards pull real data from HealthKit when connected,
+  // otherwise show "--" to indicate no data yet
   const goals: Goal[] = [
     {
-      value: "11,000",
-      label: "Daily Steps",
+      value: isAuthorized ? steps.toLocaleString() : "--",
+      label: "Steps Today",
       onPress: () => console.log("Daily Steps pressed"),
     },
     {
-      value: "25",
-      label: "Minutes Worked Out",
-      onPress: () => console.log("Minutes Worked Out pressed"),
+      value: isAuthorized ? `${activeEnergy}` : "--",
+      label: "Cal Burned",
+      onPress: () => console.log("Calories pressed"),
     },
   ];
 
@@ -40,6 +44,7 @@ export default function AccountScreen() {
   }
 
   const settingsItems: SettingsItem[] = [
+    { label: "Health", onPress: () => router.push("/(tabs)/account/health" as any) },
     { label: "Focus Mode", onPress: () => alert("Focus Mode Pressed") },
     { label: "Workouts/Week", onPress: () => alert("Workouts/Week Pressed") },
     { label: "Duration", onPress: () => alert("Duration Pressed") },
@@ -63,8 +68,6 @@ export default function AccountScreen() {
       />
 
       <GoalCards goals={goals} />
-
-      <HealthPermissionCard />
 
       <Settings title="Preferences & Settings" items={settingsItems} />
     </ScrollView>

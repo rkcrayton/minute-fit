@@ -7,8 +7,6 @@ import { TouchableOpacity, View } from "react-native";
 import tw from "twrnc";
 
 export function HealthPermissionCard() {
-  // This hook handles everything — permissions, fetching data, platform checks.
-  // Any component can call useHealthData() to get the same data.
   const {
     steps,
     activeEnergy,
@@ -39,7 +37,6 @@ export function HealthPermissionCard() {
     "tint",
   );
 
-  // On Android, show a "coming soon" message since we only support iOS for now
   if (!isAvailable) {
     return (
       <ThemedView
