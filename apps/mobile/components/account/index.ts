@@ -9,3 +9,5 @@ export type { SettingsProps, SettingsItem } from "./settings";
 
 export { SettingsOption } from "./settings-option";
 export type { SettingsOptionProps } from "./settings-option";
+
+export { HealthPermissionCard } from "./health-permission-card";
