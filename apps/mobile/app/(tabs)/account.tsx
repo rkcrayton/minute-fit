@@ -1,6 +1,6 @@
 import { ScrollView, useColorScheme, Alert } from "react-native";
 import { router } from "expo-router";
-import { AccountHeader, GoalCards, Settings, type Goal, type SettingsItem } from "@/components/account";
+import { AccountHeader, GoalCards, Settings, HealthPermissionCard, type Goal, type SettingsItem } from "@/components/account";
 import { useAuth } from "@/contexts/auth";
 import { useOnboarding } from "@/contexts/onboarding";
 import tw from "twrnc";
@@ -63,6 +63,8 @@ export default function AccountScreen() {
       />
 
       <GoalCards goals={goals} />
+
+      <HealthPermissionCard />
 
       <Settings title="Preferences & Settings" items={settingsItems} />
     </ScrollView>

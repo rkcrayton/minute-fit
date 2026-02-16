@@ -7,19 +7,23 @@ import {
   RecentWorkouts,
   type Workout,
 } from "@/components/home";
+import { useAuth } from "@/contexts/auth";
 import { ScrollView, useColorScheme } from "react-native";
 import tw from "twrnc";
 
 export default function HomeScreen() {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
+  const { user } = useAuth();
 
-  // Mock data - replace with actual state/API calls later
-  const userName = "Luke";
-  const streakDays = 5;
-  const workoutsDone = 4;
+  // User info from backend
+  const userName = user?.name ?? user?.username ?? "User";
+
+  // TODO: Replace with real data once workout models exist in the backend
+  const streakDays = 0;
+  const workoutsDone = 0;
   const workoutsGoal = 5;
-  const minutesDone = 18;
+  const minutesDone = 0;
   const minutesGoal = 30;
 
   const recentWorkouts: Workout[] = [
