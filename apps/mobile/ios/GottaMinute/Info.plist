@@ -55,6 +55,10 @@
     <string>Allow $(PRODUCT_NAME) to access your camera</string>
     <key>NSFaceIDUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>GottaMinute uses your health data to track your steps and activity progress.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>GottaMinute saves your workout data to Apple Health.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSUserActivityTypes</key>
