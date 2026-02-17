@@ -1,9 +1,9 @@
-// app/(tabs)/scan/movenet.tsx
+import { Buffer } from "buffer";
+import { Asset } from "expo-asset";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import * as FileSystem from "expo-file-system/legacy";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Button, Platform, ScrollView, Text, View } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
-import * as FileSystem from "expo-file-system";
-import { Buffer } from "buffer";
 
 type PoseKeypoint = {
   name?: string;
@@ -12,10 +12,15 @@ type PoseKeypoint = {
   score?: number;
 };
 
+// --------------------
+// TOGGLE THIS
+// --------------------
+const TEST_IMAGE_MODE = true; // true = run pose on bundled image (no webcam). false = camera snapshot mode.
+
 export default function MoveNetScreen() {
   const cameraRef = useRef<CameraView>(null);
 
-  // New Expo Camera permission API
+  // Only relevant in camera mode
   const [permission, requestPermission] = useCameraPermissions();
 
   const [tfReady, setTfReady] = useState(false);
@@ -30,9 +35,10 @@ export default function MoveNetScreen() {
   const decodeJpegRef = useRef<any>(null);
   const detectorRef = useRef<any>(null);
 
-  const permissionGranted = !!permission?.granted;
+  // In TEST_IMAGE_MODE we do NOT need camera permission
+  const permissionGranted = TEST_IMAGE_MODE ? true : !!permission?.granted;
 
-  // Initialize TFJS + rn-webgl backend + MoveNet detector AFTER permission is granted
+  // Initialize TFJS + rn-webgl backend + MoveNet detector
   useEffect(() => {
     if (!permissionGranted) return;
 
@@ -43,18 +49,16 @@ export default function MoveNetScreen() {
         setStatus("Initializing TensorFlow...");
         setLoading(true);
 
-        // Dynamic imports keep Metro happier and avoid loading until needed
         const tf = await import("@tensorflow/tfjs");
-        await import("@tensorflow/tfjs-react-native"); // registers RN backend pieces
+        await import("@tensorflow/tfjs-react-native");
         const tfReactNative = await import("@tensorflow/tfjs-react-native");
         const poseDetection = await import("@tensorflow-models/pose-detection");
 
-        // Prefer rn-webgl for tfjs-react-native
         await tf.ready();
         try {
           await tf.setBackend("rn-webgl");
         } catch {
-          // if backend already set or not available, continue
+          // continue
         }
 
         if (cancelled) return;
@@ -68,7 +72,6 @@ export default function MoveNetScreen() {
         const detector = await poseDetection.createDetector(
           poseDetection.SupportedModels.MoveNet,
           {
-            // Options are safe defaults; adjust later
             modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
             enableSmoothing: true,
           }
@@ -78,7 +81,12 @@ export default function MoveNetScreen() {
 
         detectorRef.current = detector;
         setDetectorReady(true);
-        setStatus("Ready. Take a snapshot to run pose detection.");
+
+        if (TEST_IMAGE_MODE) {
+          setStatus("Ready (Test Image Mode). Tap “Run Pose on Test Image”.");
+        } else {
+          setStatus("Ready. Take a snapshot to run pose detection.");
+        }
       } catch (e: any) {
         setStatus(`TF init failed: ${e?.message ?? String(e)}`);
       } finally {
@@ -91,8 +99,75 @@ export default function MoveNetScreen() {
     };
   }, [permissionGranted]);
 
-  const canRun = useMemo(() => permissionGranted && tfReady && detectorReady, [permissionGranted, tfReady, detectorReady]);
+  const canRun = useMemo(
+    () => permissionGranted && tfReady && detectorReady,
+    [permissionGranted, tfReady, detectorReady]
+  );
 
+  // --------------------
+  // TEST IMAGE PIPELINE
+  // --------------------
+  async function runOnBundledTestImage() {
+  if (!canRun) {
+    setStatus("Not ready yet (TFJS / detector).");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setStatus("Loading test image...");
+
+    // IMPORTANT: path must be correct and use forward slashes
+    const moduleId = require("../../../assets/images/pose_test.jpg");
+
+    // This reliably resolves the asset and gives you a valid URI
+    const assets = await Asset.loadAsync(moduleId);
+    const asset = assets?.[0];
+
+    const uri = asset?.localUri ?? asset?.uri;
+    if (!uri) {
+      throw new Error("Test image URI is missing. Check the require(...) path and file location/name.");
+    }
+
+    setStatus("Reading image bytes...");
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: "base64",
+    });
+
+    const imageBytes = Buffer.from(base64, "base64");
+    const uint8 = new Uint8Array(imageBytes);
+
+    const tf = tfRef.current;
+    const decodeJpeg = decodeJpegRef.current;
+    const detector = detectorRef.current;
+
+    if (!tf || !decodeJpeg || !detector) {
+      setStatus("TF/decoder/detector missing.");
+      return;
+    }
+
+    setStatus("Decoding JPEG to tensor...");
+    const imageTensor = decodeJpeg(uint8); // [h, w, 3]
+
+    setStatus("Running MoveNet...");
+    const poses = await detector.estimatePoses(imageTensor, { flipHorizontal: false });
+
+    tf.dispose(imageTensor);
+
+    const kps: PoseKeypoint[] = poses?.[0]?.keypoints ?? [];
+    setKeypoints(kps);
+    setStatus(`Done. Found ${kps.length} keypoints (test image).`);
+  } catch (e: any) {
+    setStatus(`Test image pose run failed: ${e?.message ?? String(e)}`);
+  } finally {
+    setLoading(false);
+  }
+}
+
+
+  // --------------------
+  // CAMERA SNAPSHOT PIPELINE
+  // --------------------
   async function takeSnapshotAndRun() {
     if (!cameraRef.current) return;
     if (!canRun) {
@@ -104,7 +179,6 @@ export default function MoveNetScreen() {
       setLoading(true);
       setStatus("Taking picture...");
 
-      // NOTE: CameraView supports takePictureAsync in recent Expo SDKs
       const photo: any = await (cameraRef.current as any).takePictureAsync({
         quality: 0.5,
         skipProcessing: true,
@@ -134,12 +208,11 @@ export default function MoveNetScreen() {
       }
 
       setStatus("Decoding JPEG to tensor...");
-      const imageTensor = decodeJpeg(uint8); // shape [h, w, 3]
+      const imageTensor = decodeJpeg(uint8);
 
       setStatus("Running MoveNet...");
       const poses = await detector.estimatePoses(imageTensor, { flipHorizontal: false });
 
-      // Cleanup tensor memory
       tf.dispose(imageTensor);
 
       const pose0 = poses?.[0];
@@ -156,7 +229,8 @@ export default function MoveNetScreen() {
 
   // ----- UI STATES -----
 
-  if (!permission) {
+  // If not in TEST_IMAGE_MODE, we must wait for permission object to load
+  if (!TEST_IMAGE_MODE && !permission) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 16 }}>
         <ActivityIndicator />
@@ -179,15 +253,19 @@ export default function MoveNetScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>
-        <CameraView
-          ref={cameraRef}
-          style={{ flex: 1 }}
-          facing="front"
-          // some emulators don’t like audio on camera preview
-          // (CameraView doesn't expose audio flags like old Camera did)
-        />
-      </View>
+      {/* Camera view only when NOT in test mode */}
+      {!TEST_IMAGE_MODE ? (
+        <View style={{ flex: 1 }}>
+          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="front" />
+        </View>
+      ) : (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: "600" }}>Test Image Mode</Text>
+          <Text style={{ marginTop: 6, opacity: 0.8, textAlign: "center" }}>
+            Pose estimation will run on a bundled image (no webcam needed).
+          </Text>
+        </View>
+      )}
 
       <View style={{ padding: 12, borderTopWidth: 1, borderColor: "#ddd" }}>
         <Text style={{ marginBottom: 8 }}>
@@ -195,20 +273,29 @@ export default function MoveNetScreen() {
         </Text>
 
         <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-          <Button
-            title={loading ? "Working..." : "Snapshot + Run Pose"}
-            onPress={takeSnapshotAndRun}
-            disabled={loading || !canRun}
-          />
+          {TEST_IMAGE_MODE ? (
+            <Button
+              title={loading ? "Working..." : "Run Pose on Test Image"}
+              onPress={runOnBundledTestImage}
+              disabled={loading || !canRun}
+            />
+          ) : (
+            <Button
+              title={loading ? "Working..." : "Snapshot + Run Pose"}
+              onPress={takeSnapshotAndRun}
+              disabled={loading || !canRun}
+            />
+          )}
+
           {loading ? <ActivityIndicator /> : null}
         </View>
 
         <ScrollView style={{ marginTop: 12, maxHeight: 180 }}>
           {keypoints.length === 0 ? (
             <Text style={{ opacity: 0.7 }}>
-              No keypoints yet. Tap “Snapshot + Run Pose”.
+              No keypoints yet. Tap the button above.
               {"\n"}
-              {Platform.OS === "android" ? "Tip: Emulators often have limited camera support." : null}
+              {Platform.OS === "android" ? "Tip: Test Image Mode avoids emulator camera limitations." : null}
             </Text>
           ) : (
             keypoints.map((kp, i) => (

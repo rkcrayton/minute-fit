@@ -41,6 +41,7 @@
           }
         }
       ],
+<<<<<<< HEAD
       "expo-secure-store",
       [
         "./plugins/healthkit",
@@ -49,6 +50,10 @@
           "healthUpdatePermission": "GottaMinute saves your workout data to Apple Health."
         }
       ]
+=======
+      "expo-asset",
+      "expo-secure-store"
+>>>>>>> origin/main
     ],
     "experiments": {
       "typedRoutes": true,
