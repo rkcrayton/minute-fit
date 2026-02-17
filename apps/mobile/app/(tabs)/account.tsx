@@ -1,12 +1,16 @@
-import { ScrollView, useColorScheme } from "react-native";
+import { ScrollView, useColorScheme, Alert } from "react-native";
+import { router } from "expo-router";
 import { AccountHeader, GoalCards, Settings, type Goal, type SettingsItem } from "@/components/account";
+import { useAuth } from "@/contexts/auth";
+import { useOnboarding } from "@/contexts/onboarding";
 import tw from "twrnc";
 
 export default function AccountScreen() {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
+  const { user, logout } = useAuth();
+  const { setOnboarded } = useOnboarding();
 
-  // Mock data - replace with actual state/API calls later
   const goals: Goal[] = [
     {
       value: "11,000",
@@ -20,6 +24,21 @@ export default function AccountScreen() {
     },
   ];
 
+  function handleLogout() {
+    Alert.alert("Log out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log out",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          setOnboarded(false);
+          router.replace("/(onboarding)" as any);
+        },
+      },
+    ]);
+  }
+
   const settingsItems: SettingsItem[] = [
     { label: "Focus Mode", onPress: () => alert("Focus Mode Pressed") },
     { label: "Workouts/Week", onPress: () => alert("Workouts/Week Pressed") },
@@ -29,7 +48,7 @@ export default function AccountScreen() {
     { label: "My Gear", onPress: () => alert("My Gear Pressed") },
     { label: "Subscription", onPress: () => alert("Subscription Pressed") },
     { label: "Profile Info", onPress: () => alert("Profile Info Pressed") },
-    { label: "Log out", onPress: () => alert("Logout Pressed") },
+    { label: "Log out", onPress: handleLogout },
   ];
 
   return (
@@ -37,17 +56,14 @@ export default function AccountScreen() {
       style={[tw`flex-1`, { backgroundColor: isDark ? "#111827" : "#FFFFFF" }]}
       contentContainerStyle={tw`p-4 pt-12`}
     >
-      {/* Account Header */}
       <AccountHeader
-        userName="Aoi Todo"
+        userName={user?.name || user?.username || "User"}
         userImage={require("@/assets/images/Todo.png")}
         logoImage={require("@/assets/images/gottaminute_transparent_big.png")}
       />
 
-      {/* Goal Cards */}
       <GoalCards goals={goals} />
 
-      {/* Settings */}
       <Settings title="Preferences & Settings" items={settingsItems} />
     </ScrollView>
   );
