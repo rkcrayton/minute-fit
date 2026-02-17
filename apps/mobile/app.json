@@ -41,7 +41,6 @@
           }
         }
       ],
-<<<<<<< HEAD
       "expo-secure-store",
       [
         "./plugins/healthkit",
@@ -49,11 +48,9 @@
           "healthSharePermission": "GottaMinute uses your health data to track your steps and activity progress.",
           "healthUpdatePermission": "GottaMinute saves your workout data to Apple Health."
         }
-      ]
-=======
+      ],
       "expo-asset",
       "expo-secure-store"
->>>>>>> origin/main
     ],
     "experiments": {
       "typedRoutes": true,
