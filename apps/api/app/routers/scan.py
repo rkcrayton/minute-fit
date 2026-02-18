@@ -1,0 +1,337 @@
+import uuid
+from pathlib import Path
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
+
+import auth
+from database import get_db
+from models.user import User
+from models.scan_result import ScanResult
+
+router = APIRouter(prefix="/scan", tags=["scan"])
+
+# Directories for storing scan artifacts
+BASE_DIR = Path(__file__).resolve().parent.parent
+UPLOADS_DIR = BASE_DIR / "artifacts" / "uploads"
+PROCESSED_DIR = BASE_DIR / "artifacts" / "processed"
+MEASUREMENT_DIR = BASE_DIR / "artifacts" / "measurements"
+
+for d in [UPLOADS_DIR, PROCESSED_DIR, MEASUREMENT_DIR]:
+    d.mkdir(parents=True, exist_ok=True)
+
+
+def _assess_health(body_fat: float, gender: str, age: int) -> dict:
+    """Categorize health status based on body fat, gender, and age."""
+    if gender == 'male':
+        if age < 40:
+            thresholds = {'athletic': 14, 'fit': 18, 'acceptable': 25}
+        elif age < 60:
+            thresholds = {'athletic': 17, 'fit': 22, 'acceptable': 28}
+        else:
+            thresholds = {'athletic': 20, 'fit': 25, 'acceptable': 30}
+    else:
+        if age < 40:
+            thresholds = {'athletic': 21, 'fit': 25, 'acceptable': 32}
+        elif age < 60:
+            thresholds = {'athletic': 24, 'fit': 29, 'acceptable': 35}
+        else:
+            thresholds = {'athletic': 27, 'fit': 32, 'acceptable': 38}
+
+    if body_fat <= thresholds['athletic']:
+        category = 'Athletic'
+        risk = 'low'
+        recommendation = 'Excellent body composition. Maintain current fitness level.'
+    elif body_fat <= thresholds['fit']:
+        category = 'Fit'
+        risk = 'low'
+        recommendation = 'Good body composition. Continue regular exercise and balanced diet.'
+    elif body_fat <= thresholds['acceptable']:
+        category = 'Acceptable'
+        risk = 'moderate'
+        recommendation = 'Consider increasing physical activity and improving diet quality.'
+    else:
+        category = 'Obese'
+        risk = 'high'
+        recommendation = 'Consult a healthcare provider. Focus on sustainable weight loss through diet and exercise.'
+
+    return {
+        'category': category,
+        'risk_level': risk,
+        'recommendation': recommendation,
+    }
+
+
+def _process_analysis_sync(
+    session_id: str,
+    front_path: str,
+    side_path: str,
+    back_path: str,
+    height: float,
+    weight: float,
+    age: int,
+    gender: str,
+) -> dict:
+    """
+    Body composition analysis pipeline:
+    1. Preprocess front/side/back photos
+    2. Extract body circumference measurements via MediaPipe
+    3. Calculate body fat using the US Navy formula
+    4. Assess health category
+    """
+    from image_prep.front import BodyPhotoPreprocessor
+    from image_prep.side import SideViewProcessor
+    from image_prep.back import BackViewProcessor
+    from utils.body_measurements import BodyCircumferenceEstimator
+    from utils.volume_calculation import navy_body_fat
+
+    # --- Step 1: Preprocess images ---
+    front_out = str(PROCESSED_DIR / f"{session_id}_front.jpg")
+    side_out = str(PROCESSED_DIR / f"{session_id}_side.jpg")
+    back_out = str(PROCESSED_DIR / f"{session_id}_back.jpg")
+
+    front_proc = BodyPhotoPreprocessor()
+    side_proc = SideViewProcessor()
+    back_proc = BackViewProcessor()
+
+    front_result = front_proc.preprocess(front_path, front_out)
+    if not front_result['success']:
+        raise ValueError(f"Front photo: {front_result['message']}")
+
+    side_result = side_proc.process(side_path, side_out)
+    if not side_result['success']:
+        raise ValueError(f"Side photo: {side_result['message']}")
+
+    back_result = back_proc.process(back_path, back_out)
+    if not back_result['success']:
+        raise ValueError(f"Back photo: {back_result['message']}")
+
+    # --- Step 2: Estimate circumferences via MediaPipe ---
+    estimator = BodyCircumferenceEstimator(use_yolo=False)
+    measurements = estimator.estimate(
+        front_out, side_out, back_out,
+        height_cm=height,
+        output_dir=str(MEASUREMENT_DIR),
+        session_id=session_id,
+    )
+
+    final_measurements = {
+        'neck': measurements.neck,
+        'shoulder_width': measurements.shoulder_width,
+        'abdomen': measurements.abdomen,
+        'waist': measurements.abdomen,
+        'hip': measurements.hip,
+        'thigh': measurements.thigh,
+        'knee': measurements.knee,
+        'calf': measurements.calf,
+        'ankle': measurements.ankle,
+    }
+
+    # --- Step 3: Body fat via US Navy formula ---
+    body_fat = navy_body_fat(
+        gender=gender,
+        height_cm=height,
+        neck_cm=measurements.neck,
+        abdomen_cm=measurements.abdomen,
+        hip_cm=measurements.hip,
+    )
+
+    # --- Step 4: Remaining composition metrics ---
+    height_m = height / 100
+    bmi = round(weight / (height_m ** 2), 1)
+    fat_mass = round(weight * body_fat / 100, 1)
+    lean_mass = round(weight - fat_mass, 1)
+    waist_to_hip = round(
+        measurements.abdomen / measurements.hip if measurements.hip > 0 else 0.0, 3
+    )
+
+    health = _assess_health(body_fat, gender, age)
+
+    # Convert to imperial (cm -> inches, kg -> lbs)
+    CM_TO_IN = 1 / 2.54
+    KG_TO_LBS = 2.20462
+    imperial_measurements = {
+        k: round(v * CM_TO_IN, 1) for k, v in final_measurements.items()
+    }
+
+    return {
+        'session_id': session_id,
+        'measurements': imperial_measurements,
+        'body_composition': {
+            'bmi': bmi,
+            'body_fat_percentage': body_fat,
+            'fat_mass_lbs': round(fat_mass * KG_TO_LBS, 1),
+            'lean_mass_lbs': round(lean_mass * KG_TO_LBS, 1),
+            'waist_to_hip_ratio': waist_to_hip,
+        },
+        'health_assessment': health,
+    }
+
+
+@router.post("/analyze", status_code=status.HTTP_200_OK)
+def analyze_body(
+    front: UploadFile = File(...),
+    side: UploadFile = File(...),
+    back: UploadFile = File(...),
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Accept front, side, and back photos from an authenticated user and run
+    the full body composition analysis. User height, weight, age are pulled
+    from their profile automatically.
+    """
+    # Validate the user has profile data needed for analysis
+    if not current_user.height or not current_user.weight or not current_user.age:
+        raise HTTPException(
+            status_code=400,
+            detail="Profile incomplete. Please set height, weight, and age before scanning."
+        )
+
+    gender = getattr(current_user, 'gender', 'neutral') or 'neutral'
+    if gender not in ('male', 'female', 'neutral'):
+        gender = 'neutral'
+
+    # Save uploaded files
+    session_id = str(uuid.uuid4())
+    allowed_ext = {'.jpg', '.jpeg', '.png'}
+
+    def save_upload(upload: UploadFile, label: str) -> str:
+        ext = Path(upload.filename).suffix.lower()
+        if ext not in allowed_ext:
+            raise HTTPException(status_code=400, detail=f"{label} must be jpg or png")
+        dest = str(UPLOADS_DIR / f"{session_id}_{label}{ext}")
+        with open(dest, "wb") as f:
+            f.write(upload.file.read())
+        return dest
+
+    front_path = save_upload(front, "front")
+    side_path = save_upload(side, "side")
+    back_path = save_upload(back, "back")
+
+    # Run analysis (synchronous - takes ~5 seconds)
+    try:
+        result = _process_analysis_sync(
+            session_id=session_id,
+            front_path=front_path,
+            side_path=side_path,
+            back_path=back_path,
+            height=float(current_user.height) * 2.54,       # inches -> cm
+            weight=float(current_user.weight) * 0.453592,  # lbs -> kg
+            age=int(current_user.age),
+            gender=gender,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+    # Persist result to database
+    bc = result['body_composition']
+    ha = result['health_assessment']
+
+    scan = ScanResult(
+        session_id=session_id,
+        user_id=current_user.id,
+        bmi=bc['bmi'],
+        body_fat_percentage=bc['body_fat_percentage'],
+        fat_mass_kg=bc['fat_mass_lbs'],
+        lean_mass_kg=bc['lean_mass_lbs'],
+        waist_to_hip_ratio=bc['waist_to_hip_ratio'],
+        health_category=ha['category'],
+        health_risk_level=ha['risk_level'],
+        health_recommendation=ha['recommendation'],
+        measurements=result['measurements'],
+    )
+    db.add(scan)
+    db.commit()
+    db.refresh(scan)
+
+    return result
+
+
+@router.get("/results/{session_id}")
+def get_scan_results(
+    session_id: str,
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Retrieve a stored scan result by session ID."""
+    scan = db.query(ScanResult).filter(
+        ScanResult.session_id == session_id,
+        ScanResult.user_id == current_user.id,
+    ).first()
+
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan result not found")
+
+    return {
+        'session_id': scan.session_id,
+        'measurements': scan.measurements,
+        'body_composition': {
+            'bmi': scan.bmi,
+            'body_fat_percentage': scan.body_fat_percentage,
+            'fat_mass_lbs': scan.fat_mass_kg,
+            'lean_mass_lbs': scan.lean_mass_kg,
+            'waist_to_hip_ratio': scan.waist_to_hip_ratio,
+        },
+        'health_assessment': {
+            'category': scan.health_category,
+            'risk_level': scan.health_risk_level,
+            'recommendation': scan.health_recommendation,
+        },
+        'created_at': scan.created_at,
+    }
+
+
+@router.get("/images/{session_id}/{view}")
+def get_processed_image(
+    session_id: str,
+    view: str,
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Serve the preprocessed image for a given view (front, side, back)."""
+    if view not in ('front', 'side', 'back'):
+        raise HTTPException(status_code=400, detail="View must be front, side, or back")
+
+    scan = db.query(ScanResult).filter(
+        ScanResult.session_id == session_id,
+        ScanResult.user_id == current_user.id,
+    ).first()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    for ext in ('.jpg', '.jpeg', '.png'):
+        path = PROCESSED_DIR / f"{session_id}_{view}{ext}"
+        if path.exists():
+            return FileResponse(str(path), media_type="image/jpeg")
+
+    raise HTTPException(status_code=404, detail="Image not found")
+
+
+@router.get("/measurement-images/{session_id}/{view}")
+def get_measurement_image(
+    session_id: str,
+    view: str,
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Serve the annotated measurement visualization for a given view."""
+    if view not in ('front', 'side', 'back'):
+        raise HTTPException(status_code=400, detail="View must be front, side, or back")
+
+    scan = db.query(ScanResult).filter(
+        ScanResult.session_id == session_id,
+        ScanResult.user_id == current_user.id,
+    ).first()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    path = MEASUREMENT_DIR / f"{session_id}_{view}_measurements.jpg"
+    if path.exists():
+        return FileResponse(str(path), media_type="image/jpeg")
+
+    raise HTTPException(status_code=404, detail="Measurement image not found")
+
+

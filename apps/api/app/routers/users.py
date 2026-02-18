@@ -30,6 +30,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             weight=user.weight,
             height=user.height,
             fitness_goal=user.fitness_goal,
+            gender=user.gender,
         )
         db.add(db_user)
         db.commit()
@@ -78,6 +79,8 @@ def update_user_profile(
         current_user.height = user_update.height
     if user_update.fitness_goal is not None:
         current_user.fitness_goal = user_update.fitness_goal
+    if user_update.gender is not None:
+        current_user.gender = user_update.gender
 
     db.commit()
     db.refresh(current_user)

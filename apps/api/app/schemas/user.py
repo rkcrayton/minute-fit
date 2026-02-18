@@ -10,6 +10,7 @@ class UserBase(BaseModel):
     weight: Optional[float] = None
     height: Optional[float] = None
     fitness_goal: Optional[str] = None
+    gender: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -22,6 +23,7 @@ class UserUpdate(BaseModel):
     weight: Optional[float] = None
     height: Optional[float] = None
     fitness_goal: Optional[str] = None
+    gender: Optional[str] = None
 
 
 class UserResponse(UserBase):

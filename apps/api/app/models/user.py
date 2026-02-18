@@ -13,3 +13,4 @@ class User(Base):
     weight = Column(Float, index=True, nullable=True)
     height = Column(Float, index=True, nullable=True)
     fitness_goal = Column(String,index=True,nullable=True)
+    gender = Column(String, index=True, nullable=True)  # 'male', 'female', or 'neutral'
