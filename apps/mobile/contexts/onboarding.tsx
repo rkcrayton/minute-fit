@@ -5,6 +5,7 @@ export type UserProfile = {
   heightFeet: string;
   heightInches: string;
   weight: string;
+  age: string;
 };
 
 type OnboardingContextValue = {
@@ -17,7 +18,7 @@ type OnboardingContextValue = {
 const OnboardingContext = createContext<OnboardingContextValue>({
   hasOnboarded: false,
   setOnboarded: () => {},
-  userProfile: { name: "", heightFeet: "", heightInches: "", weight: "" },
+  userProfile: { name: "", heightFeet: "", heightInches: "", weight: "" , age: ""},
   setUserProfile: () => {},
 });
 
@@ -28,6 +29,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     heightFeet: "",
     heightInches: "",
     weight: "",
+    age: "",
   });
 
   return (

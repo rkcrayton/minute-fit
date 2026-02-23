@@ -23,6 +23,7 @@ export default function Profile() {
   const [heightFeet, setHeightFeet] = useState("");
   const [heightInches, setHeightInches] = useState("");
   const [weight, setWeight] = useState("");
+  const [age, setAge] = useState("");
 
   const bg = isDark ? "#0B0B0F" : "#FFFFFF";
   const text = isDark ? "#FFFFFF" : "#111111";
@@ -34,10 +35,11 @@ export default function Profile() {
     name.trim().length > 0 &&
     heightFeet.trim().length > 0 &&
     heightInches.trim().length > 0 &&
-    weight.trim().length > 0;
-
+    weight.trim().length > 0 &&
+    age.trim().length > 0;
+    
   const handleContinue = async () => {
-    setUserProfile({ name: name.trim(), heightFeet, heightInches, weight });
+    setUserProfile({ name: name.trim(), heightFeet, heightInches, weight, age });
 
     // Convert height to total inches and send to backend
     const totalInches =
@@ -48,6 +50,7 @@ export default function Profile() {
         name: name.trim(),
         height: totalInches,
         weight: parseFloat(weight),
+        age: parseInt(age, 10),
       });
     } catch (error) {
       console.warn("Failed to save profile to server:", error);
@@ -145,6 +148,28 @@ export default function Profile() {
               returnKeyType="done"
             />
             <Text style={[styles.unit, { color: subtext }]}>lbs</Text>
+          </View>
+        </View>
+        
+        {/* Age */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: text }]}>Age</Text>
+          <View style={styles.weightRow}>
+            <TextInput
+              style={[
+                styles.input,
+                styles.flex,
+                { color: text, borderColor: border, backgroundColor: inputBg },
+              ]}
+              placeholder="years"
+              placeholderTextColor={subtext}
+              value={age}
+              onChangeText={setAge}
+              keyboardType="number-pad"
+              maxLength={2}
+              returnKeyType="done"
+            />
+            <Text style={[styles.unit, { color: subtext }]}>yrs</Text>
           </View>
         </View>
 
