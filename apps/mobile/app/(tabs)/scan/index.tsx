@@ -29,9 +29,9 @@ export default function ScanCaptureScreen() {
   const [back, setBack] = useState<Picked | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // TODO: get rid of this token
+  // TODO: get rid of this token; for testing purposes only, you will have to get a token for a user from backend/swagger UI
   const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiZXhwIjoxNzcxNTMzNjg0fQ.XOfGbPC3Q6GG4KXGKsYEkjIdXnbiYUKlK-9Onm7_Ypg";
+    "";
 
   const allReady = useMemo(
     () => !!front && !!side && !!back,

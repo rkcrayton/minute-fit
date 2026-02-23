@@ -56,7 +56,7 @@ export default function Profile() {
       console.warn("Failed to save profile to server:", error);
     }
 
-    router.push("/(onboarding)/scan-intro" as any);
+    router.replace("/(tabs)" as any)
   };
 
   return (
