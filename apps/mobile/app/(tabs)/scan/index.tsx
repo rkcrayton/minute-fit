@@ -11,10 +11,8 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "@/contexts/auth";
+import { getBaseURL } from "@/services/api";
 import { analyzeScan } from "../../../services/scan";
-
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://10.0.2.2:8000";
 
 type ViewKey = "front" | "side" | "back";
 
@@ -98,7 +96,7 @@ export default function ScanCaptureScreen() {
 
     try {
       const result = await analyzeScan({
-        baseUrl: BASE_URL,
+        baseUrl: getBaseURL(),
         token,
         front,
         side,

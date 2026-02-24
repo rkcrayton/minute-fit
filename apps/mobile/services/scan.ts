@@ -68,14 +68,29 @@ export async function analyzeScan(params: {
   appendImage("side", side);
   appendImage("back", back);
 
-  const res = await fetch(`${baseUrl}/scan/analyze`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-    body: fd,
-  });
+  // 120s timeout — scan processing with MediaPipe can take a while
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120_000);
+
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/scan/analyze`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      body: fd,
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    clearTimeout(timeout);
+    if (err.name === "AbortError") {
+      throw new Error("Scan timed out — the server took too long to respond.");
+    }
+    throw new Error(`Network error — is the backend running? (${err.message})`);
+  }
+  clearTimeout(timeout);
 
   if (!res.ok) {
     let detail = `Upload failed (${res.status})`;
