@@ -12,6 +12,14 @@ export default function AccountLayout() {
           headerBackTitle: "Account",
         }}
       />
+      <Stack.Screen
+        name="profile"
+        options={{
+          headerShown: true,
+          title: "Profile Info",
+          headerBackTitle: "Account",
+        }}
+      />
     </Stack>
   );
 }

@@ -237,7 +237,7 @@ def analyze_body(
         body_fat_percentage=bc['body_fat_percentage'],
         fat_mass_kg=bc['fat_mass_lbs'],
         lean_mass_kg=bc['lean_mass_lbs'],
-        waist_to_hip_ratio=bc['waist_to_hip_ratio'],
+        waist_to_hip_ratio=float(bc['waist_to_hip_ratio']),
         health_category=ha['category'],
         health_risk_level=ha['risk_level'],
         health_recommendation=ha['recommendation'],
