@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useAuth } from "@/contexts/auth";
 import { analyzeScan } from "../../../services/scan";
 
 const BASE_URL =
@@ -28,10 +29,7 @@ export default function ScanCaptureScreen() {
   const [side, setSide] = useState<Picked | null>(null);
   const [back, setBack] = useState<Picked | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // TODO: get rid of this token; for testing purposes only, you will have to get a token for a user from backend/swagger UI
-  const token =
-    "";
+  const { token } = useAuth();
 
   const allReady = useMemo(
     () => !!front && !!side && !!back,

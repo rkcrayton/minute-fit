@@ -7,22 +7,35 @@ interface User {
   id: number;
   email: string;
   username: string;
-  name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   age: number | null;
   weight: number | null;
   height: number | null;
   fitness_goal: string | null;
+  gender: string | null;
 }
 
 interface RegisterData {
   email: string;
   username: string;
   password: string;
-  name?: string;
+  first_name?: string;
+  last_name?: string;
   age?: number;
   weight?: number;
   height?: number;
   fitness_goal?: string;
+}
+
+interface ProfileUpdate {
+  first_name?: string;
+  last_name?: string;
+  age?: number;
+  weight?: number;
+  height?: number;
+  fitness_goal?: string;
+  gender?: string;
 }
 
 interface AuthContextType {
@@ -32,6 +45,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: ProfileUpdate) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -92,6 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await login(data.username, data.password);
   }
 
+  async function updateProfile(data: ProfileUpdate) {
+    const res = await api.put("/users/me", data);
+    setUser(res.data);
+  }
+
   async function logout() {
     await SecureStore.deleteItemAsync("token");
     setToken(null);
@@ -99,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
