@@ -95,3 +95,8 @@ app-example
 # ======================
 **/__pycache__/
 
+# ======================
+# Ignore image artifacts for now
+# ======================
+apps/api/app/artifacts
+
