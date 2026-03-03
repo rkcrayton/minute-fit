@@ -52,7 +52,7 @@ export default function AccountScreen() {
     { label: "Payment Method", onPress: () => alert("Payment Method Pressed") },
     { label: "My Gear", onPress: () => alert("My Gear Pressed") },
     { label: "Subscription", onPress: () => alert("Subscription Pressed") },
-    { label: "Profile Info", onPress: () => alert("Profile Info Pressed") },
+    { label: "Profile Info", onPress: () => router.push("/(tabs)/account/profile" as any) },
     { label: "Log out", onPress: handleLogout },
   ];
 
@@ -62,7 +62,7 @@ export default function AccountScreen() {
       contentContainerStyle={tw`p-4 pt-12`}
     >
       <AccountHeader
-        userName={user?.name || user?.username || "User"}
+        userName={[user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username || "User"}
         userImage={require("@/assets/images/Todo.png")}
         logoImage={require("@/assets/images/gottaminute_transparent_big.png")}
       />

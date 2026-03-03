@@ -25,11 +25,13 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             email=user.email,
             username=user.username,
             hashed_password=hashed_password,
-            name=user.name,
+            first_name=user.first_name,
+            last_name=user.last_name,
             age=user.age,
             weight=user.weight,
             height=user.height,
             fitness_goal=user.fitness_goal,
+            gender=user.gender,
         )
         db.add(db_user)
         db.commit()
@@ -68,8 +70,10 @@ def update_user_profile(
     db: Session = Depends(get_db)
 ):
 
-    if user_update.name is not None:
-        current_user.name = user_update.name
+    if user_update.first_name is not None:
+        current_user.first_name = user_update.first_name
+    if user_update.last_name is not None:
+        current_user.last_name = user_update.last_name
     if user_update.age is not None:
         current_user.age = user_update.age
     if user_update.weight is not None:
@@ -78,6 +82,8 @@ def update_user_profile(
         current_user.height = user_update.height
     if user_update.fitness_goal is not None:
         current_user.fitness_goal = user_update.fitness_goal
+    if user_update.gender is not None:
+        current_user.gender = user_update.gender
 
     db.commit()
     db.refresh(current_user)

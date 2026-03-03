@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState } from "react";
 
 export type UserProfile = {
-  name: string;
+  firstName: string;
+  lastName: string;
   heightFeet: string;
   heightInches: string;
   weight: string;
+  age: string;
 };
 
 type OnboardingContextValue = {
@@ -17,17 +19,19 @@ type OnboardingContextValue = {
 const OnboardingContext = createContext<OnboardingContextValue>({
   hasOnboarded: false,
   setOnboarded: () => {},
-  userProfile: { name: "", heightFeet: "", heightInches: "", weight: "" },
+  userProfile: { firstName: "", lastName: "", heightFeet: "", heightInches: "", weight: "" , age: ""},
   setUserProfile: () => {},
 });
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [hasOnboarded, setOnboarded] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: "",
+    firstName: "",
+    lastName: "",
     heightFeet: "",
     heightInches: "",
     weight: "",
+    age: "",
   });
 
   return (

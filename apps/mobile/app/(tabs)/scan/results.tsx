@@ -1,145 +1,230 @@
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useMemo } from "react";
-import { View, Text, Pressable, StyleSheet, useColorScheme } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  View,
+  Pressable,
+  useColorScheme,
+} from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+import api from "@/services/api";
 
 type ScanResult = {
-  posture: number;
-  mobility: number;
-  balance: number;
-  symmetry: number;
-  findings: string[];
+  session_id: string;
+  measurements: Record<string, number>;
+  body_composition: {
+    bmi: number;
+    body_fat_percentage: number;
+    fat_mass_lbs: number;
+    lean_mass_lbs: number;
+    waist_to_hip_ratio: number;
+  };
+  health_assessment: {
+    category: string;
+    risk_level: string;
+    recommendation: string;
+  };
+  created_at?: string;
 };
 
-export default function Results() {
+function prettyLabel(key: string) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function fmtNum(v: unknown) {
+  if (typeof v === "number") return Number.isFinite(v) ? v.toFixed(1) : String(v);
+  return String(v ?? "");
+}
+
+export default function ScanResultsScreen() {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
-  const { videoUri } = useLocalSearchParams<{ videoUri?: string }>();
+  const bg = isDark ? "#0B0B0F" : "#FFFFFF";
+  const cardBg = isDark ? "rgba(255,255,255,0.06)" : "#F6F7FB";
+  const text = isDark ? "#FFFFFF" : "#111111";
+  const subtext = isDark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.55)";
+  const border = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
 
-  // Mock data (MVP)
-  const result: ScanResult = useMemo(
-    () => ({
-      posture: 78,
-      mobility: 64,
-      balance: 71,
-      symmetry: 69,
-      findings: [
-        "Right shoulder slightly higher than left (possible tightness).",
-        "Knees drift inward during squat (work on glute activation).",
-        "Limited overhead reach (upper-back mobility).",
-      ],
-    }),
-    []
+  const params = useLocalSearchParams<{ sessionId?: string; session_id?: string }>();
+  const sessionId = params.sessionId ?? params.session_id;
+
+  const [result, setResult] = useState<ScanResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
+
+  const load = async () => {
+    if (!sessionId) {
+      setErrMsg("Missing sessionId (this screen must be opened from the Scan page).");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setErrMsg(null);
+
+    try {
+      const res = await api.get<ScanResult>(`/scan/results/${sessionId}`);
+      setResult(res.data);
+    } catch (e: any) {
+      const msg =
+        e?.response?.data?.detail ??
+        e?.message ??
+        "Failed to load scan results";
+      setErrMsg(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
+
+  const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <View
+      style={{
+        backgroundColor: cardBg,
+        borderWidth: 1,
+        borderColor: border,
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 12,
+      }}
+    >
+      <Text style={{ color: text, fontWeight: "900", marginBottom: 8, fontSize: 15 }}>
+        {title}
+      </Text>
+      {children}
+    </View>
   );
 
-  const bg = isDark ? "#0B0B0F" : "#FFFFFF";
-  const text = isDark ? "#FFFFFF" : "#111111";
-  const subtext = isDark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.65)";
-  const border = isDark ? "rgba(255,255,255,0.15)" : "#DDDDDD";
-  const cardBg = isDark ? "rgba(255,255,255,0.04)" : "#FAFAFA";
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: bg, alignItems: "center", justifyContent: "center", gap: 12 }}>
+        <ActivityIndicator />
+        <Text style={{ color: subtext }}>Loading results…</Text>
+      </View>
+    );
+  }
+
+  if (errMsg || !result) {
+    return (
+      <View style={{ flex: 1, backgroundColor: bg, padding: 16, justifyContent: "center", gap: 12 }}>
+        <Text style={{ fontSize: 18, fontWeight: "900", color: text }}>Could not load results</Text>
+        <Text style={{ color: "#ef4444" }}>{errMsg ?? "Unknown error"}</Text>
+
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 6 }}>
+          <Pressable
+            onPress={load}
+            style={{ padding: 12, borderRadius: 12, backgroundColor: "#2563eb" }}
+          >
+            <Text style={{ color: "white", fontWeight: "800" }}>Retry</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.back()}
+            style={{ padding: 12, borderRadius: 12, backgroundColor: isDark ? "#111827" : "#E5E7EB" }}
+          >
+            <Text style={{ color: isDark ? "white" : "#111827", fontWeight: "800" }}>
+              Go Back
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  const bc = result.body_composition;
+  const ha = result.health_assessment;
+
+  // Order these so it feels “real” to the user
+  const measurementOrder = [
+    "neck",
+    "shoulder_width",
+    "waist",
+    "abdomen",
+    "hip",
+    "thigh",
+    "knee",
+    "calf",
+    "ankle",
+  ];
+
+  const sortedMeasurements = measurementOrder
+    .filter((k) => k in result.measurements)
+    .map((k) => [k, result.measurements[k]] as const);
+
+  const otherMeasurements = Object.entries(result.measurements).filter(
+    ([k]) => !measurementOrder.includes(k)
+  );
 
   return (
-    <View style={[styles.container, { backgroundColor: bg }]}>
-      <Text style={[styles.title, { color: text }]}>Your Snapshot</Text>
-
-      <Text style={[styles.subtitle, { color: subtext }]}>
-        {videoUri ? "Scan captured ✓ (mock results)" : "No video detected (mock results)"}
+    <ScrollView style={{ flex: 1, backgroundColor: bg }} contentContainerStyle={{ padding: 16, paddingBottom: 30 }}>
+      <Text style={{ fontSize: 26, fontWeight: "900", marginBottom: 6, color: text }}>
+        Scan Results
+      </Text>
+      <Text style={{ color: subtext, marginBottom: 14 }}>
+        Session: {result.session_id}
       </Text>
 
-      <View style={styles.grid}>
-        <ScoreCard label="Posture" value={result.posture} isDark={isDark} border={border} cardBg={cardBg} />
-        <ScoreCard label="Mobility" value={result.mobility} isDark={isDark} border={border} cardBg={cardBg} />
-        <ScoreCard label="Balance" value={result.balance} isDark={isDark} border={border} cardBg={cardBg} />
-        <ScoreCard label="Symmetry" value={result.symmetry} isDark={isDark} border={border} cardBg={cardBg} />
-      </View>
-
-      <View style={[styles.card, { borderColor: border, backgroundColor: cardBg }]}>
-        <Text style={[styles.cardTitle, { color: text }]}>Key findings</Text>
-        {result.findings.map((f, idx) => (
-          <Text key={idx} style={[styles.bullet, { color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.8)" }]}>
-            • {f}
-          </Text>
-        ))}
-      </View>
-
-      <Pressable
-        style={[styles.primaryBtn, { backgroundColor: "#3B82F6" }]}
-        onPress={() => router.push("/(tabs)/plan")}
-      >
-        <Text style={[styles.primaryText, { color: "#FFFFFF" }]}>
-          Update My Plan
+      <Card title="Health Assessment">
+        <Text style={{ color: text, fontSize: 16, fontWeight: "900" }}>
+          {ha.category} <Text style={{ color: subtext, fontWeight: "700" }}>({ha.risk_level} risk)</Text>
         </Text>
-      </Pressable>
+        <Text style={{ color: subtext, marginTop: 6, lineHeight: 20 }}>
+          {ha.recommendation}
+        </Text>
+      </Card>
+
+      <Card title="Body Composition">
+        <View style={{ gap: 6 }}>
+          <Text style={{ color: text }}>BMI: <Text style={{ fontWeight: "900" }}>{fmtNum(bc.bmi)}</Text></Text>
+          <Text style={{ color: text }}>Body Fat %: <Text style={{ fontWeight: "900" }}>{fmtNum(bc.body_fat_percentage)}</Text></Text>
+          <Text style={{ color: text }}>Fat Mass (lbs): <Text style={{ fontWeight: "900" }}>{fmtNum(bc.fat_mass_lbs)}</Text></Text>
+          <Text style={{ color: text }}>Lean Mass (lbs): <Text style={{ fontWeight: "900" }}>{fmtNum(bc.lean_mass_lbs)}</Text></Text>
+          <Text style={{ color: text }}>Waist/Hip Ratio: <Text style={{ fontWeight: "900" }}>{fmtNum(bc.waist_to_hip_ratio)}</Text></Text>
+        </View>
+      </Card>
+
+      <Card title="Measurements (inches)">
+        <View style={{ gap: 6 }}>
+          {sortedMeasurements.map(([k, v]) => (
+            <View key={k} style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              <Text style={{ color: subtext }}>{prettyLabel(k)}</Text>
+              <Text style={{ color: text, fontWeight: "900" }}>{fmtNum(v)}</Text>
+            </View>
+          ))}
+
+          {otherMeasurements.length > 0 && (
+            <View style={{ marginTop: 10, gap: 6 }}>
+              {otherMeasurements.map(([k, v]) => (
+                <View key={k} style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                  <Text style={{ color: subtext }}>{prettyLabel(k)}</Text>
+                  <Text style={{ color: text, fontWeight: "900" }}>{fmtNum(v)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      </Card>
 
       <Pressable
-        style={styles.secondaryBtn}
         onPress={() => router.replace("/(tabs)/scan")}
+        style={{
+          marginTop: 8,
+          padding: 14,
+          borderRadius: 14,
+          backgroundColor: "#2563eb",
+          alignItems: "center",
+        }}
       >
-        <Text style={[styles.secondaryText, { color: subtext }]}>Run Another Scan</Text>
+        <Text style={{ color: "white", fontWeight: "900" }}>New Scan</Text>
       </Pressable>
-
-      {/* Optional debug: show the uri trimmed */}
-      {typeof videoUri === "string" ? (
-        <Text style={[styles.debug, { color: subtext }]} numberOfLines={2}>
-          Video: {videoUri}
-        </Text>
-      ) : null}
-    </View>
+    </ScrollView>
   );
 }
-
-function ScoreCard({
-  label,
-  value,
-  isDark,
-  border,
-  cardBg,
-}: {
-  label: string;
-  value: number;
-  isDark: boolean;
-  border: string;
-  cardBg: string;
-}) {
-  const text = isDark ? "#FFFFFF" : "#111111";
-  const sub = isDark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.6)";
-
-  return (
-    <View style={[styles.scoreCard, { borderColor: border, backgroundColor: cardBg }]}>
-      <Text style={[styles.scoreLabel, { color: sub }]}>{label}</Text>
-      <Text style={[styles.scoreValue, { color: text }]}>{value}</Text>
-      <Text style={[styles.scoreHint, { color: sub }]}>/ 100</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, gap: 10 },
-  title: { fontSize: 22, fontWeight: "800" },
-  subtitle: { marginBottom: 6 },
-
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-
-  scoreCard: {
-    width: "48%",
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 12,
-    gap: 2,
-  },
-  scoreLabel: { fontWeight: "800" },
-  scoreValue: { fontSize: 28, fontWeight: "900" },
-  scoreHint: {},
-
-  card: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 8, marginTop: 2 },
-  cardTitle: { fontWeight: "900" },
-  bullet: { lineHeight: 20 },
-
-  primaryBtn: { padding: 14, borderRadius: 12, alignItems: "center", marginTop: 6 },
-  primaryText: { fontWeight: "900" },
-
-  secondaryBtn: { padding: 12, borderRadius: 12, alignItems: "center" },
-  secondaryText: { fontWeight: "900" },
-
-  debug: { marginTop: 8, fontSize: 12 },
-});

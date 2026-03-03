@@ -8,8 +8,10 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    name = Column(String, index=True, nullable=True)
+    first_name = Column(String, index=True, nullable=True)
+    last_name = Column(String, index=True, nullable=True)
     age = Column(Integer, index=True, nullable=True)
     weight = Column(Float, index=True, nullable=True)
     height = Column(Float, index=True, nullable=True)
     fitness_goal = Column(String,index=True,nullable=True)
+    gender = Column(String, index=True, nullable=True)  # 'male', 'female', or 'neutral'

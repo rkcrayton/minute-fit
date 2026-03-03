@@ -5,11 +5,13 @@ from typing import Optional
 class UserBase(BaseModel):
     email: EmailStr
     username: str
-    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     age: Optional[int] = None
     weight: Optional[float] = None
     height: Optional[float] = None
     fitness_goal: Optional[str] = None
+    gender: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -17,11 +19,13 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     age: Optional[int] = None
     weight: Optional[float] = None
     height: Optional[float] = None
     fitness_goal: Optional[str] = None
+    gender: Optional[str] = None
 
 
 class UserResponse(UserBase):

@@ -37,7 +37,6 @@ export function useHealthData() {
         }
       },
     );
-
     AppleHealthKit.getActiveEnergyBurned(
       {
         startDate: today.toISOString(),

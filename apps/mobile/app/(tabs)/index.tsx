@@ -17,7 +17,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
 
   // User info from backend
-  const userName = user?.name ?? user?.username ?? "User";
+  const userName = user?.first_name ?? user?.username ?? "User";
 
   // TODO: Replace with real data once workout models exist in the backend
   const streakDays = 0;
