@@ -1,5 +1,3 @@
-import { Platform } from "react-native";
-
 export type ScanAnalyzeResponse = {
   session_id: string;
   measurements: Record<string, number>;
@@ -25,7 +23,7 @@ type UploadAsset = {
 
 function guessName(view: "front" | "side" | "back", uri: string) {
   const ext = uri.split(".").pop()?.toLowerCase();
-  const safeExt = ext && ["jpg", "jpeg", "png"].includes(ext) ? ext : "jpg";
+  const safeExt = ext && ["jpg", "jpeg", "png", "heic", "heif"].includes(ext) ? ext : "jpg";
   return `${view}.${safeExt}`;
 }
 
@@ -68,9 +66,9 @@ export async function analyzeScan(params: {
   appendImage("side", side);
   appendImage("back", back);
 
-  // 120s timeout — scan processing with MediaPipe can take a while
+  // 5 min timeout — scan processing with MediaPipe can take a while on first run
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 120_000);
+  const timeout = setTimeout(() => controller.abort(), 300_000);
 
   let res: Response;
   try {

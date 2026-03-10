@@ -1,4 +1,5 @@
 import uuid
+import cv2
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from fastapi.responses import FileResponse
@@ -194,22 +195,41 @@ def analyze_body(
 
     # Save uploaded files
     session_id = str(uuid.uuid4())
-    allowed_ext = {'.jpg', '.jpeg', '.png'}
+    allowed_ext = {'.jpg', '.jpeg', '.png', '.heic', '.heif'}
 
     def save_upload(upload: UploadFile, label: str) -> str:
         ext = Path(upload.filename).suffix.lower()
         if ext not in allowed_ext:
-            raise HTTPException(status_code=400, detail=f"{label} must be jpg or png")
-        dest = str(UPLOADS_DIR / f"{session_id}_{label}{ext}")
-        with open(dest, "wb") as f:
+            raise HTTPException(status_code=400, detail=f"{label} must be jpg, png, or heic")
+        raw_dest = str(UPLOADS_DIR / f"{session_id}_{label}{ext}")
+        with open(raw_dest, "wb") as f:
             f.write(upload.file.read())
-        return dest
+        # Convert HEIC/HEIF to JPEG
+        if ext in {'.heic', '.heif'}:
+            from PIL import Image
+            import pillow_heif
+            pillow_heif.register_heif_opener()
+            img = Image.open(raw_dest)
+            jpeg_dest = str(UPLOADS_DIR / f"{session_id}_{label}.jpg")
+            img.convert("RGB").save(jpeg_dest, "JPEG", quality=95)
+            return jpeg_dest
+        return raw_dest
 
     front_path = save_upload(front, "front")
     side_path = save_upload(side, "side")
     back_path = save_upload(back, "back")
 
-    # Run analysis (synchronous - takes ~5 seconds)
+    # Downsample large images to max 1024px on longest side
+    MAX_DIM = 1024
+    for path in [front_path, side_path, back_path]:
+        img = cv2.imread(path)
+        h, w = img.shape[:2]
+        if max(h, w) > MAX_DIM:
+            scale = MAX_DIM / max(h, w)
+            img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+            cv2.imwrite(path, img)
+
+    # Run analysis
     try:
         result = _process_analysis_sync(
             session_id=session_id,

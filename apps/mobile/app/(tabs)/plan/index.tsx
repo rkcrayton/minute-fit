@@ -1,91 +1,126 @@
-import React from "react";
-import { StyleSheet, ScrollView, Pressable } from "react-native";
-import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, ScrollView, ActivityIndicator, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import api from "@/services/api";
 
-type WorkoutPlan = {
-  id: string;
-  title: string;
-  subtitle: string;
-  daysPerWeek: number;
-  durationWeeks: number;
-  focus: string[];
+type PlanExercise = {
+  exercise_id: number;
+  name: string;
+  primary_muscle: string;
+  sets: number;
+  reps: number;
 };
 
-const PLANS: WorkoutPlan[] = [
-  {
-    id: "beginner-3",
-    title: "Beginner Strength",
-    subtitle: "Full-body fundamentals",
-    daysPerWeek: 3,
-    durationWeeks: 6,
-    focus: ["Squat", "Push", "Pull", "Core"],
-  },
-  {
-    id: "hypertrophy-4",
-    title: "Hypertrophy Split",
-    subtitle: "Build muscle with volume",
-    daysPerWeek: 4,
-    durationWeeks: 8,
-    focus: ["Upper", "Lower", "Accessories", "Progressive Overload"],
-  },
-  {
-    id: "conditioning-3",
-    title: "Conditioning + Mobility",
-    subtitle: "Work capacity & movement",
-    daysPerWeek: 3,
-    durationWeeks: 4,
-    focus: ["Intervals", "Zone 2", "Mobility"],
-  },
-];
+type DaySchedule = {
+  day: string;
+  rest: boolean;
+  exercises: PlanExercise[];
+};
 
-function PlanCard({ plan }: { plan: WorkoutPlan }) {
-  const router = useRouter();
+type WorkoutPlan = {
+  title: string;
+  subtitle: string;
+  body_fat_percentage: number;
+  schedule: DaySchedule[];
+};
 
-  return (
-    <Pressable
-      onPress={() => router.push(`/plan/${plan.id}`)}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-    >
-      <ThemedView style={styles.cardHeader}>
-        <ThemedText type="subtitle">{plan.title}</ThemedText>
-        <ThemedText style={styles.subtitle}>{plan.subtitle}</ThemedText>
-      </ThemedView>
-
-      <ThemedView style={styles.metaRow}>
-        <ThemedView style={styles.pill}>
-          <ThemedText style={styles.pillText}>{plan.daysPerWeek} days/wk</ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.pill}>
-          <ThemedText style={styles.pillText}>{plan.durationWeeks} weeks</ThemedText>
-        </ThemedView>
-      </ThemedView>
-
-      <ThemedView style={styles.focusWrap}>
-        {plan.focus.map((tag) => (
-          <ThemedView key={tag} style={styles.tag}>
-            <ThemedText style={styles.tagText}>{tag}</ThemedText>
-          </ThemedView>
-        ))}
-      </ThemedView>
-
-      <ThemedText style={[styles.cta, { color: "#3B82F6" }]}>Tap to view details →</ThemedText>
-    </Pressable>
-  );
-}
+const DAY_LABELS: Record<string, string> = {
+  monday: "Monday",
+  tuesday: "Tuesday",
+  wednesday: "Wednesday",
+  thursday: "Thursday",
+  friday: "Friday",
+  saturday: "Saturday",
+  sunday: "Sunday",
+};
 
 export default function PlanIndex() {
+  const [plan, setPlan] = useState<WorkoutPlan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchPlan() {
+      try {
+        const res = await api.get("/exercises/plan");
+        setPlan(res.data);
+      } catch (err: any) {
+        const detail = err?.response?.data?.detail;
+        setError(detail || "Failed to load plan.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPlan();
+  }, []);
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.centered}>
+        <ActivityIndicator size="large" />
+      </ThemedView>
+    );
+  }
+
+  if (error || !plan) {
+    return (
+      <ThemedView style={styles.centered}>
+        <ThemedText style={styles.errorText}>{error || "No plan available."}</ThemedText>
+        <ThemedText style={styles.hint}>Complete a body scan to generate your plan.</ThemedText>
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title">Plan</ThemedText>
-        <ThemedText style={styles.headerText}>Choose a plan and start training.</ThemedText>
+        <ThemedText type="title">{plan.title}</ThemedText>
+        <ThemedText style={styles.subtitle}>{plan.subtitle}</ThemedText>
+        <ThemedView style={styles.bfPill}>
+          <ThemedText style={styles.bfText}>
+            Based on {plan.body_fat_percentage}% body fat
+          </ThemedText>
+        </ThemedView>
       </ThemedView>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {PLANS.map((plan) => (
-          <PlanCard key={plan.id} plan={plan} />
+        {plan.schedule.map((day) => (
+          <Pressable
+            key={day.day}
+            onPress={() => setExpandedDay(expandedDay === day.day ? null : day.day)}
+            style={({ pressed }) => [styles.dayCard, pressed && styles.dayCardPressed]}
+          >
+            <ThemedView style={styles.dayHeader}>
+              <ThemedText type="defaultSemiBold">{DAY_LABELS[day.day]}</ThemedText>
+              {day.rest ? (
+                <ThemedView style={styles.restBadge}>
+                  <ThemedText style={styles.restText}>Rest</ThemedText>
+                </ThemedView>
+              ) : (
+                <ThemedText style={styles.exerciseCount}>
+                  {day.exercises.length} exercises
+                </ThemedText>
+              )}
+            </ThemedView>
+
+            {expandedDay === day.day && !day.rest && (
+              <ThemedView style={styles.exerciseList}>
+                {day.exercises.map((ex, i) => (
+                  <ThemedView key={i} style={styles.exerciseRow}>
+                    <ThemedView style={styles.exerciseInfo}>
+                      <ThemedText type="defaultSemiBold">{ex.name}</ThemedText>
+                      <ThemedText style={styles.muscleText}>{ex.primary_muscle}</ThemedText>
+                    </ThemedView>
+                    <ThemedText style={styles.setsReps}>
+                      {ex.sets} × {ex.reps}
+                    </ThemedText>
+                  </ThemedView>
+                ))}
+              </ThemedView>
+            )}
+          </Pressable>
         ))}
       </ScrollView>
     </ThemedView>
@@ -94,40 +129,54 @@ export default function PlanIndex() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  header: { gap: 6, paddingBottom: 12 },
-  headerText: { opacity: 0.8 },
-  scrollContent: { paddingBottom: 24, gap: 12 },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
+  errorText: { fontSize: 16, textAlign: "center", opacity: 0.8 },
+  hint: { marginTop: 8, opacity: 0.6, textAlign: "center" },
 
-  card: {
+  header: { gap: 6, paddingBottom: 16 },
+  subtitle: { opacity: 0.75 },
+  bfPill: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: "rgba(150,150,150,0.25)",
+  },
+  bfText: { fontSize: 12, opacity: 0.8 },
+
+  scrollContent: { paddingBottom: 24, gap: 10 },
+
+  dayCard: {
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: "rgba(150,150,150,0.25)",
-    gap: 12,
   },
-  cardPressed: { transform: [{ scale: 0.99 }], opacity: 0.9 },
-  cardHeader: { gap: 4 },
-  subtitle: { opacity: 0.75 },
+  dayCardPressed: { opacity: 0.9 },
+  dayHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
 
-  metaRow: { flexDirection: "row", gap: 8 },
-  pill: {
+  restBadge: {
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: "rgba(150,150,150,0.25)",
-  },
-  pillText: { fontSize: 12, opacity: 0.9 },
-
-  focusWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  tag: {
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 4,
     borderWidth: 1,
     borderColor: "rgba(150,150,150,0.2)",
   },
-  tagText: { fontSize: 12, opacity: 0.9 },
+  restText: { fontSize: 12, opacity: 0.6 },
+  exerciseCount: { fontSize: 13, opacity: 0.6 },
 
-  cta: { marginTop: 4, opacity: 0.85 },
+  exerciseList: { marginTop: 12, gap: 10 },
+  exerciseRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(150,150,150,0.15)",
+  },
+  exerciseInfo: { gap: 2 },
+  muscleText: { fontSize: 12, opacity: 0.6 },
+  setsReps: { fontSize: 15, opacity: 0.9 },
 });

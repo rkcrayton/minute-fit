@@ -82,7 +82,10 @@ class BodyCircumferenceEstimator:
     def _get_mask(self, img: np.ndarray) -> np.ndarray:
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         results = self.segmenter.process(rgb)
-        mask = (results.segmentation_mask > 0.5).astype(np.uint8) * 255
+        # Use higher threshold and erode to tighten mask to actual body contour
+        mask = (results.segmentation_mask > 0.65).astype(np.uint8) * 255
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        mask = cv2.erode(mask, kernel, iterations=2)
         return mask
 
     def _get_landmarks(self, img: np.ndarray) -> Optional[Dict]:
@@ -347,7 +350,14 @@ class BodyCircumferenceEstimator:
             x1_b, x2_b, w_b = self._measure_torso_width(back_mask, abdomen_y, torso_center_x)
             abdomen_width_cm = ((w_f + w_b) / 2) * front_scale
 
-            _, _, abdomen_depth_px = self._get_contiguous_width(side_mask, int(h_side * 0.42), w_side // 2)
+            # Use side landmarks to find abdomen depth at correct y-position
+            side_abdomen_y = int(h_side * 0.42)
+            if side_lm:
+                side_l_shoulder = side_lm.get(11) or side_lm.get(12)
+                side_l_hip = side_lm.get(23) or side_lm.get(24)
+                if side_l_shoulder and side_l_hip:
+                    side_abdomen_y = int(side_l_shoulder[1] * 0.35 + side_l_hip[1] * 0.65)
+            _, _, abdomen_depth_px = self._get_contiguous_width(side_mask, side_abdomen_y, w_side // 2)
             abdomen_depth_cm = abdomen_depth_px * side_scale
             abdomen = ellipse_circumference(abdomen_width_cm, abdomen_depth_cm)
         else:
@@ -360,7 +370,13 @@ class BodyCircumferenceEstimator:
             x1_b, x2_b, w_b = self._measure_torso_width(back_mask, hip_y, torso_center_x)
             hip_width_cm = ((w_f + w_b) / 2) * front_scale
 
-            _, _, hip_depth_px = self._get_contiguous_width(side_mask, int(h_side * 0.55), w_side // 2)
+            # Use side landmarks for hip depth
+            side_hip_y = int(h_side * 0.55)
+            if side_lm:
+                side_l_hip = side_lm.get(23) or side_lm.get(24)
+                if side_l_hip:
+                    side_hip_y = side_l_hip[1]
+            _, _, hip_depth_px = self._get_contiguous_width(side_mask, side_hip_y, w_side // 2)
             hip_depth_cm = hip_depth_px * side_scale
             hip = ellipse_circumference(hip_width_cm, hip_depth_cm)
         else:

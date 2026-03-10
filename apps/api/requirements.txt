@@ -13,3 +13,5 @@ psycopg2-binary
 opencv-python
 mediapipe==0.10.14
 numpy
+Pillow
+pillow-heif

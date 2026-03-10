@@ -9,7 +9,7 @@ class BodyPhotoPreprocessor:
         self.mp_pose = mp.solutions.pose
         self.pose = self.mp_pose.Pose(
             static_image_mode=True,
-            model_complexity=2,
+            model_complexity=1,
             min_detection_confidence=0.5
         )
 
