@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 
 COPY --chown=appuser:appuser app/ .
 
+RUN mkdir -p /app/artifacts/uploads && \
+    chown -R appuser:appuser /app/artifacts \
+
 USER appuser
 
 EXPOSE 8000
