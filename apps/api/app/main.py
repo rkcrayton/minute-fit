@@ -11,7 +11,9 @@ from routers import users, exercises, user_exercises, scan, water
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: seed exercise data (already idempotent)
+    # Create tables if they don't exist
+    Base.metadata.create_all(bind=engine)
+    # Seed exercise data (already idempotent)
     db = SessionLocal()
     try:
         exercises.seed_exercises(db)
