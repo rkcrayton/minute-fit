@@ -41,7 +41,7 @@ export function TodayProgress({
       ]}
     >
       <ThemedText type="defaultSemiBold" style={tw`mb-4 opacity-60 text-xs uppercase tracking-wide`}>
-        Today's Progress
+        Today&apos;s Progress
       </ThemedText>
 
       <View style={tw`flex-row justify-around mb-4`}>

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base, SessionLocal
-from routers import users, exercises, user_exercises, scan
+from routers import users, exercises, user_exercises, scan, water
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -20,6 +20,7 @@ app.include_router(users.router)
 app.include_router(exercises.router)
 app.include_router(user_exercises.router)
 app.include_router(scan.router)
+app.include_router(water.router)
 
 # Seed exercise data on startup
 db = SessionLocal()
