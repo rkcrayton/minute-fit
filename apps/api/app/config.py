@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     APP_NAME: str = "GMFL"
-    SECRET_KEY: str = "change-me-in-production"
+    SECRET_KEY: str = ""
     PORT: int = 8080
     DEBUG: bool = False
 
