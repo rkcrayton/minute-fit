@@ -8,6 +8,8 @@ python-jose[cryptography]==3.5.0
 passlib[argon2]==1.7.4
 python-multipart==0.0.22
 psycopg2-binary
+pg8000
+alembic
 
 # Body scan dependencies
 opencv-python

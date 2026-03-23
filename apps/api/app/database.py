@@ -5,11 +5,16 @@ from config import settings
 
 
 engine = create_engine(
-    settings.DATABASE_URL
+    settings.database_url,
+    pool_size=5,
+    max_overflow=2,
+    pool_recycle=1800,
+    pool_pre_ping=True,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 # Dependency
 def get_db():
