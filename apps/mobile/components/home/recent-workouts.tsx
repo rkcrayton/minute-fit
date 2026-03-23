@@ -16,18 +16,9 @@ export type RecentWorkoutsProps = {
 };
 
 export function RecentWorkouts({ workouts }: RecentWorkoutsProps) {
-  const cardBgColor = useThemeColor(
-    { light: "#F9FAFB", dark: "#1F2937" },
-    "background",
-  );
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
-  const iconColor = useThemeColor(
-    { light: "#10B981", dark: "#34D399" },
-    "tint",
-  );
+  const cardBgColor = useThemeColor({}, "surface");
+  const borderColor = useThemeColor({}, "border");
+  const iconColor = useThemeColor({ light: "#10B981", dark: "#34D399" }, "tint");
 
   return (
     <ThemedView

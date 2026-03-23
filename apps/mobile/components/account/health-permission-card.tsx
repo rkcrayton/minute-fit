@@ -15,27 +15,11 @@ export function HealthPermissionCard() {
     requestPermission,
   } = useHealthData();
 
-  // Theme colors — same pattern used across the app
-  const cardBgColor = useThemeColor(
-    { light: "#F9FAFB", dark: "#1F2937" },
-    "background",
-  );
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
-  const subtextColor = useThemeColor(
-    { light: "#6B7280", dark: "#9CA3AF" },
-    "icon",
-  );
-  const statBgColor = useThemeColor(
-    { light: "#F3F4F6", dark: "#111827" },
-    "background",
-  );
-  const accentColor = useThemeColor(
-    { light: "#10B981", dark: "#34D399" },
-    "tint",
-  );
+  const cardBgColor = useThemeColor({}, "surface");
+  const borderColor = useThemeColor({}, "border");
+  const subtextColor = useThemeColor({}, "textSecondary");
+  const statBgColor = useThemeColor({}, "surfaceElevated");
+  const accentColor = useThemeColor({ light: "#10B981", dark: "#34D399" }, "tint");
 
   if (!isAvailable) {
     return (

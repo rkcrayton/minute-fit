@@ -1,10 +1,11 @@
 import React from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import tw from "twrnc";
 import StatCard from "./stat-card";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { SlidersHorizontal } from "lucide-react-native";
 
 export type TrackingItem = {
   id: string;
@@ -17,27 +18,25 @@ export type TrackingItem = {
   onPressButton?: () => void;
   onPressCard?: () => void;
   ringColor?: string;
+  icon?: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 };
 
 type TrackingSectionProps = {
   title?: string;
   items: TrackingItem[];
   layout?: "list" | "grid";
+  onConfigure?: () => void;
 };
 
 export default function TrackingSection({
   title = "Daily Tracking",
   items,
   layout = "list",
+  onConfigure,
 }: TrackingSectionProps) {
-  const cardBgColor = useThemeColor(
-    { light: "#F9FAFB", dark: "#1F2937" },
-    "background",
-  );
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
+  const cardBgColor = useThemeColor({}, "surface");
+  const borderColor = useThemeColor({}, "border");
+  const iconColor = useThemeColor({}, "textSecondary");
 
   return (
     <ThemedView
@@ -46,12 +45,19 @@ export default function TrackingSection({
         { backgroundColor: cardBgColor, borderColor },
       ]}
     >
-      <ThemedText
-        type="defaultSemiBold"
-        style={tw`mb-3 opacity-60 text-xs uppercase tracking-wide`}
-      >
-        {title}
-      </ThemedText>
+      <View style={tw`flex-row justify-between items-center mb-3`}>
+        <ThemedText
+          type="defaultSemiBold"
+          style={tw`opacity-60 text-xs uppercase tracking-wide`}
+        >
+          {title}
+        </ThemedText>
+        {onConfigure && (
+          <Pressable onPress={onConfigure} style={{ padding: 4 }}>
+            <SlidersHorizontal size={16} color={iconColor} />
+          </Pressable>
+        )}
+      </View>
 
       <View
         style={
@@ -75,6 +81,7 @@ export default function TrackingSection({
               onPressButton={item.onPressButton}
               onPressCard={item.onPressCard}
               ringColor={item.ringColor}
+              icon={item.icon}
               layout={layout}
             />
           </View>

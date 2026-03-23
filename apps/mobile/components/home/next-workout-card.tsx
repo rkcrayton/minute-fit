@@ -24,31 +24,13 @@ export function NextWorkoutCard({
   onStart,
   onSwap,
 }: NextWorkoutCardProps) {
-  const cardBgColor = useThemeColor(
-    { light: "#F9FAFB", dark: "#1F2937" },
-    "background",
-  );
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
-  const startButtonColor = useThemeColor(
-    { light: "#3B82F6", dark: "#2563EB" },
-    "tint",
-  );
-  const swapButtonColor = useThemeColor(
-    { light: "#FFFFFF", dark: "#374151" },
-    "background",
-  );
+  const cardBgColor = useThemeColor({}, "surface");
+  const borderColor = useThemeColor({}, "border");
+  const startButtonColor = useThemeColor({}, "tint");
+  const swapButtonColor = useThemeColor({}, "surfaceElevated");
   const buttonTextColor = "#FFFFFF";
-  const swapTextColor = useThemeColor(
-    { light: "#374151", dark: "#D1D5DB" },
-    "text",
-  );
-  const iconColor = useThemeColor(
-    { light: "#6B7280", dark: "#9CA3AF" },
-    "icon",
-  );
+  const swapTextColor = useThemeColor({}, "text");
+  const iconColor = useThemeColor({}, "icon");
 
   const getDifficultyColor = () => {
     if (difficulty === "Easy") return "#10B981";

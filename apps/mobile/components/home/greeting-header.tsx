@@ -11,7 +11,7 @@ export type GreetingHeaderProps = {
 };
 
 export function GreetingHeader({ userName, streakDays }: GreetingHeaderProps) {
-  const textColor = useThemeColor({ light: "#111827", dark: "#F9FAFB" }, "text");
+  const textColor = useThemeColor({}, "text");
   const accentColor = useThemeColor({ light: "#EF4444", dark: "#F87171" }, "tint");
 
   const getGreeting = () => {

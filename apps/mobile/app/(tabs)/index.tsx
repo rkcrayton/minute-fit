@@ -11,27 +11,44 @@ import TrackingSection, {
   type TrackingItem,
 } from "@/components/tracking/tracking-section";
 import WaterLogModal from "@/components/tracking/water-log-modal";
+import TrackingConfigModal from "@/components/tracking/tracking-config-modal";
+import { ALL_STATS, type StatId } from "@/constants/tracking-stats";
 import { useAuth } from "@/contexts/auth";
+import { useTrackingPreferences } from "@/contexts/tracking-preferences";
 import { useHealthData } from "@/hooks/use-health-data";
-import { getAdaptiveStepGoal } from "@/services/tracking-goals";
+import {
+  DEFAULT_CALORIES_GOAL,
+  DEFAULT_DISTANCE_GOAL_MI,
+  DEFAULT_EXERCISE_GOAL_MIN,
+  DEFAULT_FLOORS_GOAL,
+  DEFAULT_SLEEP_GOAL_HRS,
+  getAdaptiveStepGoal,
+} from "@/services/tracking-goals";
 import { createWaterLog, getTodayWaterSummary } from "@/services/water";
-import { ScrollView, useColorScheme } from "react-native";
+import { ScrollView } from "react-native";
 import { useMemo, useState, useEffect, useCallback } from "react";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import tw from "twrnc";
 
 export default function HomeScreen() {
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
   const { user } = useAuth();
+  const backgroundColor = useThemeColor({}, "background");
 
   const {
     steps,
     activeEnergy,
+    exerciseMinutes,
+    distanceMiles,
+    floorsClimbed,
+    restingHeartRate,
+    sleepHours,
     weeklyStepHistory,
     isAvailable,
     isAuthorized,
     requestPermission,
   } = useHealthData();
+
+  const { selectedIds } = useTrackingPreferences();
 
   const userName = user?.first_name ?? user?.username ?? "User";
 
@@ -45,14 +62,13 @@ export default function HomeScreen() {
   const [waterOz, setWaterOz] = useState(0);
   const [isWaterLoading, setIsWaterLoading] = useState(false);
   const [isWaterModalVisible, setIsWaterModalVisible] = useState(false);
+  const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
 
   const parsedWeight = user?.weight != null ? Number(user.weight) : null;
   const hasValidWeight =
     parsedWeight !== null && Number.isFinite(parsedWeight) && parsedWeight > 0;
   const initialWaterGoal = hasValidWeight ? Math.round(parsedWeight / 2) : 64;
   const [waterGoal, setWaterGoal] = useState(initialWaterGoal);
-
-  const caloriesGoal = 500;
 
   const stepGoal = useMemo(
     () => getAdaptiveStepGoal(weeklyStepHistory),
@@ -76,17 +92,14 @@ export default function HomeScreen() {
     loadWaterSummary();
   }, [loadWaterSummary]);
 
-  const handleAddWater = useCallback(
-    async (amountOz: number) => {
-      try {
-        await createWaterLog({ amount_oz: amountOz });
-        setWaterOz((prev) => prev + amountOz);
-      } catch (error) {
-        console.error("Failed to log water:", error);
-      }
-    },
-    [],
-  );
+  const handleAddWater = useCallback(async (amountOz: number) => {
+    try {
+      await createWaterLog({ amount_oz: amountOz });
+      setWaterOz((prev) => prev + amountOz);
+    } catch (error) {
+      console.error("Failed to log water:", error);
+    }
+  }, []);
 
   const recentWorkouts: Workout[] = [
     { name: "Mobility", duration: "2 min" },
@@ -96,84 +109,145 @@ export default function HomeScreen() {
 
   const handleStartNow = () => {
     console.log("Start quick workout");
-    // TODO: Navigate to workout screen or start quick workout flow
   };
 
   const handleStartWorkout = () => {
     console.log("Start next workout");
-    // TODO: Navigate to workout detail/start screen
   };
 
   const handleSwapWorkout = () => {
     console.log("Swap workout");
-    // TODO: Show workout picker or swap to different workout
   };
 
   const handleQuickPick = (
     type: "reset" | "stretch" | "cardio" | "strength",
   ) => {
     console.log(`Quick pick: ${type}`);
-    // TODO: Start corresponding quick workout
   };
 
-  const trackingItems: TrackingItem[] = useMemo(
-    () => [
-      {
-        id: "steps",
-        title: "Steps",
-        value: steps,
-        goal: stepGoal,
-        unit: "",
-        subtitle: !isAvailable
-          ? "Health data not available on this device"
-          : isAuthorized
-            ? "Synced from Apple Health"
-            : "Connect Apple Health to sync your steps",
-        buttonLabel: isAvailable && !isAuthorized ? "Connect Health" : undefined,
-        onPressButton:
-          isAvailable && !isAuthorized ? requestPermission : undefined,
-        ringColor: "#22C55E",
-      },
-      {
-        id: "water",
-        title: "Water",
-        value: waterOz,
-        goal: waterGoal,
-        unit: "oz",
-        subtitle: isWaterLoading
-          ? "Loading today's water"
-          : "Tap to log water intake",
-        onPressCard: () => setIsWaterModalVisible(true),
-        ringColor: "#3B82F6",
-      },
-      {
-        id: "calories",
-        title: "Calories Burned",
-        value: activeEnergy,
-        goal: caloriesGoal,
-        unit: "cal",
-        subtitle: "Calories burned through activity today",
-        ringColor: "#F97316",
-      },
-    ],
+  const healthUnavailableSubtitle = !isAvailable
+    ? "Health data not available on this device"
+    : isAuthorized
+      ? undefined
+      : "Connect Apple Health to sync";
+
+  const connectButton = isAvailable && !isAuthorized
+    ? { buttonLabel: "Connect Health", onPressButton: requestPermission }
+    : {};
+
+  const buildTrackingItem = useCallback(
+    (id: StatId): TrackingItem => {
+      const def = ALL_STATS.find((s) => s.id === id)!;
+
+      switch (id) {
+        case "steps":
+          return {
+            id,
+            title: def.title,
+            value: steps,
+            goal: stepGoal,
+            unit: def.unit,
+            subtitle: healthUnavailableSubtitle ?? "Synced from Apple Health",
+            ringColor: def.ringColor,
+            icon: def.icon,
+            ...connectButton,
+          };
+        case "water":
+          return {
+            id,
+            title: def.title,
+            value: waterOz,
+            goal: waterGoal,
+            unit: def.unit,
+            subtitle: isWaterLoading ? "Loading today's water" : "Tap to log water intake",
+            onPressCard: () => setIsWaterModalVisible(true),
+            ringColor: def.ringColor,
+            icon: def.icon,
+          };
+        case "calories":
+          return {
+            id,
+            title: def.title,
+            value: activeEnergy,
+            goal: DEFAULT_CALORIES_GOAL,
+            unit: def.unit,
+            subtitle: healthUnavailableSubtitle ?? "Calories burned today",
+            ringColor: def.ringColor,
+            icon: def.icon,
+          };
+        case "exercise_minutes":
+          return {
+            id,
+            title: def.title,
+            value: exerciseMinutes,
+            goal: DEFAULT_EXERCISE_GOAL_MIN,
+            unit: def.unit,
+            subtitle: healthUnavailableSubtitle ?? "Active minutes today",
+            ringColor: def.ringColor,
+            icon: def.icon,
+          };
+        case "distance":
+          return {
+            id,
+            title: def.title,
+            value: distanceMiles,
+            goal: DEFAULT_DISTANCE_GOAL_MI,
+            unit: def.unit,
+            subtitle: healthUnavailableSubtitle ?? "Miles walked or run today",
+            ringColor: def.ringColor,
+            icon: def.icon,
+          };
+        case "floors":
+          return {
+            id,
+            title: def.title,
+            value: floorsClimbed,
+            goal: DEFAULT_FLOORS_GOAL,
+            unit: def.unit,
+            subtitle: healthUnavailableSubtitle ?? "Flights climbed today",
+            ringColor: def.ringColor,
+            icon: def.icon,
+          };
+        case "resting_hr":
+          return {
+            id,
+            title: def.title,
+            value: restingHeartRate,
+            goal: undefined,
+            unit: def.unit,
+            subtitle: healthUnavailableSubtitle ?? "Most recent reading",
+            ringColor: def.ringColor,
+            icon: def.icon,
+          };
+        case "sleep":
+          return {
+            id,
+            title: def.title,
+            value: sleepHours,
+            goal: DEFAULT_SLEEP_GOAL_HRS,
+            unit: def.unit,
+            subtitle: healthUnavailableSubtitle ?? "Hours slept last night",
+            ringColor: def.ringColor,
+            icon: def.icon,
+          };
+      }
+    },
     [
-      steps,
-      stepGoal,
-      isAvailable,
-      isAuthorized,
-      requestPermission,
-      waterOz,
-      waterGoal,
-      isWaterLoading,
-      activeEnergy,
-      caloriesGoal,
+      steps, stepGoal, waterOz, waterGoal, isWaterLoading,
+      activeEnergy, exerciseMinutes, distanceMiles, floorsClimbed,
+      restingHeartRate, sleepHours, isAvailable, isAuthorized, requestPermission,
     ],
   );
 
+  const trackingItems = useMemo(
+    () => selectedIds.map(buildTrackingItem),
+    [selectedIds, buildTrackingItem],
+  );
+
   return (
-    <> 
+    <>
       <ScrollView
-        style={[tw`flex-1`, { backgroundColor: isDark ? "#111827" : "#FFFFFF" }]}
+        style={[tw`flex-1`, { backgroundColor }]}
         contentContainerStyle={tw`p-4 pt-10`}
       >
         <GreetingHeader userName={userName} streakDays={streakDays} />
@@ -202,6 +276,7 @@ export default function HomeScreen() {
           title="Daily Tracking"
           items={trackingItems}
           layout="grid"
+          onConfigure={() => setIsConfigModalVisible(true)}
         />
 
         <QuickPicks onPress={handleQuickPick} />
@@ -215,6 +290,11 @@ export default function HomeScreen() {
         goalOz={waterGoal}
         onClose={() => setIsWaterModalVisible(false)}
         onAddWater={handleAddWater}
+      />
+
+      <TrackingConfigModal
+        visible={isConfigModalVisible}
+        onClose={() => setIsConfigModalVisible(false)}
       />
     </>
   );

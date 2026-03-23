@@ -11,6 +11,7 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider, useAuth } from "@/contexts/auth";
 import { OnboardingProvider, useOnboarding } from "@/contexts/onboarding";
+import { TrackingPreferencesProvider } from "@/contexts/tracking-preferences";
 
 export const unstable_settings = {
   anchor: "(onboarding)",
@@ -52,13 +53,15 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <AuthProvider>
-      <OnboardingProvider>
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-          <RootNavigator />
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </OnboardingProvider>
-    </AuthProvider>
+    <TrackingPreferencesProvider>
+      <AuthProvider>
+        <OnboardingProvider>
+          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </OnboardingProvider>
+      </AuthProvider>
+    </TrackingPreferencesProvider>
   );
 }

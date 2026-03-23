@@ -26,6 +26,7 @@ export default function Profile() {
   const [heightInches, setHeightInches] = useState("");
   const [weight, setWeight] = useState("");
   const [age, setAge] = useState("");
+  const [gender, setGender] = useState<"male" | "female" | "neutral" | "">("");
 
   const bg = isDark ? "#0B0B0F" : "#FFFFFF";
   const text = isDark ? "#FFFFFF" : "#111111";
@@ -39,7 +40,8 @@ export default function Profile() {
     heightFeet.trim().length > 0 &&
     heightInches.trim().length > 0 &&
     weight.trim().length > 0 &&
-    age.trim().length > 0;
+    age.trim().length > 0 &&
+    gender.length > 0;
     
   const handleContinue = async () => {
     setUserProfile({ firstName: firstName.trim(), lastName: lastName.trim(), heightFeet, heightInches, weight, age });
@@ -55,6 +57,7 @@ export default function Profile() {
         height: totalInches,
         weight: parseFloat(weight),
         age: parseInt(age, 10),
+        gender: gender || undefined,
       });
     } catch (error) {
       console.warn("Failed to save profile to server:", error);
@@ -194,6 +197,32 @@ export default function Profile() {
           </View>
         </View>
 
+        {/* Gender */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: text }]}>Gender</Text>
+          <View style={styles.chipRow}>
+            {(["male", "female", "neutral"] as const).map((option) => {
+              const labels = { male: "Male", female: "Female", neutral: "Other" };
+              const selected = gender === option;
+              return (
+                <Pressable
+                  key={option}
+                  onPress={() => setGender(option)}
+                  style={[
+                    styles.chip,
+                    { borderColor: selected ? "#3B82F6" : border },
+                    selected && styles.chipSelected,
+                  ]}
+                >
+                  <Text style={[styles.chipText, { color: selected ? "#FFFFFF" : text }]}>
+                    {labels[option]}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
         <Pressable
           disabled={!canContinue}
           style={[
@@ -233,4 +262,15 @@ const styles = StyleSheet.create({
   primaryBtn: { padding: 16, borderRadius: 14, alignItems: "center", marginTop: 12 },
   primaryText: { color: "#FFFFFF", fontWeight: "900", fontSize: 16 },
   disabled: { opacity: 0.35 },
+
+  chipRow: { flexDirection: "row", gap: 10 },
+  chip: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  chipSelected: { backgroundColor: "#3B82F6" },
+  chipText: { fontSize: 15, fontWeight: "700" },
 });

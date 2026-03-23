@@ -15,14 +15,8 @@ export type SettingsProps = {
 };
 
 export function Settings({ title, items }: SettingsProps) {
-  const cardBgColor = useThemeColor(
-    { light: "#F9FAFB", dark: "#1F2937" },
-    "background",
-  );
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
+  const cardBgColor = useThemeColor({}, "surface");
+  const borderColor = useThemeColor({}, "border");
 
   return (
     <ThemedView

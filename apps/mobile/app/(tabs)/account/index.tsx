@@ -1,4 +1,5 @@
-import { ScrollView, useColorScheme, Alert } from "react-native";
+import { ScrollView, Alert } from "react-native";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import { router } from "expo-router";
 import { AccountHeader, GoalCards, Settings, type Goal, type SettingsItem } from "@/components/account";
 import { useAuth } from "@/contexts/auth";
@@ -7,9 +8,8 @@ import { useHealthData } from "@/hooks/use-health-data";
 import tw from "twrnc";
 
 export default function AccountScreen() {
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
   const { user, logout } = useAuth();
+  const backgroundColor = useThemeColor({}, "background");
   const { setOnboarded } = useOnboarding();
   const { steps, activeEnergy, isAuthorized } = useHealthData();
 
@@ -44,6 +44,7 @@ export default function AccountScreen() {
   }
 
   const settingsItems: SettingsItem[] = [
+    { label: "Daily Tracking", onPress: () => router.push("/(tabs)/account/tracking" as any) },
     { label: "Health", onPress: () => router.push("/(tabs)/account/health" as any) },
     { label: "Focus Mode", onPress: () => alert("Focus Mode Pressed") },
     { label: "Workouts/Week", onPress: () => alert("Workouts/Week Pressed") },
@@ -58,7 +59,7 @@ export default function AccountScreen() {
 
   return (
     <ScrollView
-      style={[tw`flex-1`, { backgroundColor: isDark ? "#111827" : "#FFFFFF" }]}
+      style={[tw`flex-1`, { backgroundColor }]}
       contentContainerStyle={tw`p-4 pt-12`}
     >
       <AccountHeader

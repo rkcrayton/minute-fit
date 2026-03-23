@@ -16,22 +16,10 @@ export type QuickPicksProps = {
 };
 
 export function QuickPicks({ onPress }: QuickPicksProps) {
-  const cardBgColor = useThemeColor(
-    { light: "#F9FAFB", dark: "#1F2937" },
-    "background",
-  );
-  const buttonBgColor = useThemeColor(
-    { light: "#FFFFFF", dark: "#374151" },
-    "background",
-  );
-  const buttonBorderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#4B5563" },
-    "icon",
-  );
-  const iconColor = useThemeColor(
-    { light: "#3B82F6", dark: "#60A5FA" },
-    "tint",
-  );
+  const cardBgColor = useThemeColor({}, "surface");
+  const buttonBgColor = useThemeColor({}, "surfaceElevated");
+  const buttonBorderColor = useThemeColor({}, "border");
+  const iconColor = useThemeColor({}, "tint");
 
   const quickPicks: QuickPickButton[] = [
     { label: "1-Min Reset", icon: Zap, onPress: () => onPress?.("reset") },

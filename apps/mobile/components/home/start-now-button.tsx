@@ -10,10 +10,7 @@ export type StartNowButtonProps = {
 };
 
 export function StartNowButton({ onPress }: StartNowButtonProps) {
-  const buttonBgColor = useThemeColor(
-    { light: "#3B82F6", dark: "#2563EB" },
-    "tint",
-  );
+  const buttonBgColor = useThemeColor({}, "tint");
   const buttonTextColor = "#FFFFFF";
 
   return (

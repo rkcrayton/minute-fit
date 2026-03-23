@@ -24,14 +24,8 @@ export function ProgressRing({
   unit = "",
   showTrack = false,
 }: ProgressRingProps) {
-  const progressColor = useThemeColor(
-    { light: "#1D4ED8", dark: "#3B82F6" },
-    "tint",
-  );
-  const trackColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
+  const progressColor = useThemeColor({}, "tint");
+  const trackColor = useThemeColor({}, "border");
 
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;

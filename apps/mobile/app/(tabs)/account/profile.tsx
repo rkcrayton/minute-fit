@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  useColorScheme,
   StyleSheet,
 } from "react-native";
 import { router } from "expo-router";
@@ -21,8 +20,7 @@ type GenderOption = "male" | "female" | "neutral";
 
 export default function ProfileEditScreen() {
   const { user, updateProfile } = useAuth();
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
+  const backgroundColor = useThemeColor({}, "background");
 
   // Convert stored height (total inches) back to feet + inches for display
   const storedFeet = user?.height ? Math.floor(user.height / 12).toString() : "";
@@ -40,11 +38,11 @@ export default function ProfileEditScreen() {
   const [fitnessGoal, setFitnessGoal] = useState(user?.fitness_goal ?? "");
   const [saving, setSaving] = useState(false);
 
-  const cardBg = useThemeColor({ light: "#F9FAFB", dark: "#1F2937" }, "background");
-  const borderColor = useThemeColor({ light: "#E5E7EB", dark: "#374151" }, "icon");
-  const inputBg = useThemeColor({ light: "#FFFFFF", dark: "#111827" }, "background");
-  const textColor = useThemeColor({ light: "#111827", dark: "#F9FAFB" }, "text");
-  const subtextColor = useThemeColor({ light: "#6B7280", dark: "#9CA3AF" }, "icon");
+  const cardBg = useThemeColor({}, "surface");
+  const borderColor = useThemeColor({}, "border");
+  const inputBg = useThemeColor({}, "surfaceElevated");
+  const textColor = useThemeColor({}, "text");
+  const subtextColor = useThemeColor({}, "textSecondary");
 
   const genderOptions: { value: GenderOption; label: string }[] = [
     { value: "male", label: "Male" },
@@ -89,7 +87,7 @@ export default function ProfileEditScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.flex, { backgroundColor: isDark ? "#111827" : "#FFFFFF" }]}
+      style={[styles.flex, { backgroundColor }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView

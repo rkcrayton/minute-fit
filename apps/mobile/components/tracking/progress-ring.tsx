@@ -29,15 +29,8 @@ export default function ProgressRing({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - clamped);
 
-  const primaryTextColor = useThemeColor(
-    { light: "#111827", dark: "#FFFFFF" },
-    "text",
-  );
-
-  const secondaryTextColor = useThemeColor(
-    { light: "#6B7280", dark: "#D1D5DB" },
-    "text",
-  );
+  const primaryTextColor = useThemeColor({}, "text");
+  const secondaryTextColor = useThemeColor({}, "textSecondary");
 
   return (
     <View

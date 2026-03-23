@@ -1,6 +1,9 @@
+import io
 import uuid
 import cv2
+import pillow_heif
 from pathlib import Path
+from PIL import Image as PILImage
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -12,7 +15,63 @@ from models.scan_result import ScanResult
 
 router = APIRouter(prefix="/scan", tags=["scan"])
 
-# Directories for storing scan artifacts
+# Image sanitization 
+pillow_heif.register_heif_opener()  # enables PIL to open HEIC/HEIF files
+
+MAX_IMAGE_BYTES = 20 * 1024 * 1024  # 20 MB per image
+MAX_IMAGE_DIMENSION = 8000          # pixels on any single side
+
+
+def _check_magic_bytes(data: bytes) -> bool:
+    """
+    Verify the raw bytes start with a known image magic signature.
+    This prevents extension-spoofing (e.g. a renamed PDF or script).
+    """
+    if data[:3] == b'\xff\xd8\xff':               # JPEG
+        return True
+    if data[:8] == b'\x89PNG\r\n\x1a\n':          # PNG
+        return True
+    if len(data) >= 12 and data[4:8] == b'ftyp':  # HEIC/HEIF ISO Base Media
+        return True
+    return False
+
+
+def _sanitize_image(raw: bytes, label: str) -> bytes:
+    """
+    Open image bytes with Pillow, validate pixel data, strip all metadata
+    (EXIF, ICC profiles, embedded thumbnails, XMP, etc.), and re-encode as JPEG.
+
+    Re-encoding through Pillow neutralises polyglot files and any embedded
+    payloads because only the raw pixel array is preserved — everything else
+    is discarded during decode/encode.
+    """
+    try:
+        img = PILImage.open(io.BytesIO(raw))
+        img.verify()                        # raises on corrupted / truncated data
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{label} could not be decoded as a valid image.",
+        )
+
+    # Re-open after verify() (it exhausts the internal file pointer)
+    img = PILImage.open(io.BytesIO(raw))
+
+    if img.width > MAX_IMAGE_DIMENSION or img.height > MAX_IMAGE_DIMENSION:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{label} dimensions are too large (max {MAX_IMAGE_DIMENSION}px per side).",
+        )
+
+    # Convert to plain RGB — strips alpha channel, all metadata, and colour profiles
+    img = img.convert("RGB")
+
+    out = io.BytesIO()
+    img.save(out, format="JPEG", quality=95)
+    return out.getvalue()
+
+
+# Directories for storing scan artifacts 
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOADS_DIR = BASE_DIR / "artifacts" / "uploads"
 PROCESSED_DIR = BASE_DIR / "artifacts" / "processed"
@@ -193,27 +252,42 @@ def analyze_body(
     if gender not in ('male', 'female', 'neutral'):
         gender = 'neutral'
 
-    # Save uploaded files
+    # Save uploaded files with sanitization
     session_id = str(uuid.uuid4())
     allowed_ext = {'.jpg', '.jpeg', '.png', '.heic', '.heif'}
 
     def save_upload(upload: UploadFile, label: str) -> str:
-        ext = Path(upload.filename).suffix.lower()
+        # Extension allowlist
+        ext = Path(upload.filename or "").suffix.lower()
         if ext not in allowed_ext:
-            raise HTTPException(status_code=400, detail=f"{label} must be jpg, png, or heic")
-        raw_dest = str(UPLOADS_DIR / f"{session_id}_{label}{ext}")
-        with open(raw_dest, "wb") as f:
-            f.write(upload.file.read())
-        # Convert HEIC/HEIF to JPEG
-        if ext in {'.heic', '.heif'}:
-            from PIL import Image
-            import pillow_heif
-            pillow_heif.register_heif_opener()
-            img = Image.open(raw_dest)
-            jpeg_dest = str(UPLOADS_DIR / f"{session_id}_{label}.jpg")
-            img.convert("RGB").save(jpeg_dest, "JPEG", quality=95)
-            return jpeg_dest
-        return raw_dest
+            raise HTTPException(
+                status_code=400,
+                detail=f"{label} must be jpg, png, or heic.",
+            )
+
+        # Size limit — read one extra byte to detect oversized files
+        raw = upload.file.read(MAX_IMAGE_BYTES + 1)
+        if len(raw) > MAX_IMAGE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"{label} exceeds the 20 MB size limit.",
+            )
+
+        # Magic byte check — confirms actual format matches extension
+        if not _check_magic_bytes(raw):
+            raise HTTPException(
+                status_code=400,
+                detail=f"{label} file content does not match a recognised image format.",
+            )
+
+        # Sanitize: decode, validate, strip all metadata, re-encode as JPEG
+        # This neutralises polyglot files and any embedded payloads because only raw pixel data survives the PIL decode/encode round-trip.
+        clean = _sanitize_image(raw, label)
+
+        dest = str(UPLOADS_DIR / f"{session_id}_{label}.jpg")
+        with open(dest, "wb") as f:
+            f.write(clean)
+        return dest
 
     front_path = save_upload(front, "front")
     side_path = save_upload(side, "side")

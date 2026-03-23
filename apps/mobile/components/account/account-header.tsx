@@ -11,14 +11,8 @@ export type AccountHeaderProps = {
 };
 
 export function AccountHeader({ userName, userImage, logoImage }: AccountHeaderProps) {
-  const cardBgColor = useThemeColor(
-    { light: "#F9FAFB", dark: "#1F2937" },
-    "background",
-  );
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
+  const cardBgColor = useThemeColor({}, "surface");
+  const borderColor = useThemeColor({}, "border");
 
   return (
     <ThemedView style={tw`mb-6`}>

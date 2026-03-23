@@ -23,19 +23,9 @@ export default function WaterLogModal({
   const progress = goalOz > 0 ? currentOz / goalOz : 0;
   const percent = Math.min(100, Math.round(progress * 100));
 
-  const sheetBgColor = useThemeColor(
-    { light: "#FFFFFF", dark: "#111827" },
-    "background",
-  );
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
-
-  const helperTextColor = useThemeColor(
-    { light: "#6B7280", dark: "#D1D5DB" },
-    "text",
-  );
+  const sheetBgColor = useThemeColor({}, "surface");
+  const borderColor = useThemeColor({}, "border");
+  const helperTextColor = useThemeColor({}, "textSecondary");
 
   return (
     <Modal

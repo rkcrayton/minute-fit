@@ -11,14 +11,8 @@ export type SettingsOptionProps = {
 };
 
 export function SettingsOption({ label, onPress, isLast = false }: SettingsOptionProps) {
-  const borderColor = useThemeColor(
-    { light: "#E5E7EB", dark: "#374151" },
-    "icon",
-  );
-  const iconColor = useThemeColor(
-    { light: "#9CA3AF", dark: "#6B7280" },
-    "icon",
-  );
+  const borderColor = useThemeColor({}, "border");
+  const iconColor = useThemeColor({}, "icon");
 
   return (
     <TouchableOpacity
