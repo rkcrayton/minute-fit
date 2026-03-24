@@ -21,7 +21,7 @@ def generate_scan_insights(
     user_profile: dict,
 ) -> str | None:
     """
-    Call Gemini via Vertex AI to generate personalized insights from scan results.
+    Call Gemini to generate personalized insights from scan results.
     Returns the insight text, or None if the service is unavailable.
     """
     if not settings.GCP_PROJECT_ID:
@@ -29,17 +29,12 @@ def generate_scan_insights(
         return None
 
     try:
-        import vertexai
-        from vertexai.generative_models import GenerativeModel, Part
+        from google import genai
 
-        vertexai.init(
+        client = genai.Client(
+            vertexai=True,
             project=settings.GCP_PROJECT_ID,
             location=settings.GCP_LOCATION,
-        )
-
-        model = GenerativeModel(
-            settings.GEMINI_MODEL,
-            system_instruction=_SYSTEM_PROMPT,
         )
 
         bc = scan_data.get("body_composition", {})
@@ -68,9 +63,15 @@ def generate_scan_insights(
 
         prompt = f"{user_context}\n\n{scan_context}"
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                system_instruction=_SYSTEM_PROMPT,
+            ),
+        )
         return response.text
 
     except Exception:
-        _log.exception("Vertex AI call failed — returning no insights")
+        _log.exception("Gemini call failed — returning no insights")
         return None

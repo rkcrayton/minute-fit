@@ -18,5 +18,5 @@ numpy
 Pillow
 pillow-heif
 
-# Vertex AI (Gemini LLM)
-google-cloud-aiplatform>=1.38.0
+# Gemini LLM (lightweight SDK)
+google-genai>=1.0.0
