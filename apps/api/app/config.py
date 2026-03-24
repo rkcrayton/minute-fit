@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     # When set, the app connects via Unix socket at /cloudsql/<name>
     INSTANCE_CONNECTION_NAME: str = ""
 
+    # Google Cloud / Vertex AI
+    GCP_PROJECT_ID: str = ""
+    GCP_LOCATION: str = "us-central1"
+    GEMINI_MODEL: str = "gemini-2.0-flash"
+
     # CORS — comma-separated list of allowed origins
     ALLOWED_ORIGINS: str = "*"
 
