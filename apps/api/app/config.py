@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Gemini API
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash-lite"
 
     # CORS — comma-separated list of allowed origins
     ALLOWED_ORIGINS: str = "*"
