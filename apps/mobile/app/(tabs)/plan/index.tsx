@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { StyleSheet, ScrollView, ActivityIndicator, Pressable } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import api from "@/services/api";
@@ -41,20 +42,28 @@ export default function PlanIndex() {
   const [error, setError] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchPlan() {
-      try {
-        const res = await api.get("/exercises/plan");
-        setPlan(res.data);
-      } catch (err: any) {
-        const detail = err?.response?.data?.detail;
-        setError(detail || "Failed to load plan.");
-      } finally {
-        setLoading(false);
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      async function fetchPlan() {
+        setLoading(true);
+        setError(null);
+        try {
+          const res = await api.get("/exercises/plan");
+          if (!cancelled) setPlan(res.data);
+        } catch (err: any) {
+          if (!cancelled) {
+            const detail = err?.response?.data?.detail;
+            setError(detail || "Failed to load plan.");
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
       }
-    }
-    fetchPlan();
-  }, []);
+      fetchPlan();
+      return () => { cancelled = true; };
+    }, [])
+  );
 
   if (loading) {
     return (
