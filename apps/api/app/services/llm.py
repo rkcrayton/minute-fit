@@ -21,21 +21,17 @@ def generate_scan_insights(
     user_profile: dict,
 ) -> str | None:
     """
-    Call Gemini to generate personalized insights from scan results.
+    Call Gemini API to generate personalized insights from scan results.
     Returns the insight text, or None if the service is unavailable.
     """
-    if not settings.GCP_PROJECT_ID:
-        _log.warning("GCP_PROJECT_ID not set — skipping AI insights")
+    if not settings.GEMINI_API_KEY:
+        _log.warning("GEMINI_API_KEY not set — skipping AI insights")
         return None
 
     try:
         from google import genai
 
-        client = genai.Client(
-            vertexai=True,
-            project=settings.GCP_PROJECT_ID,
-            location=settings.GCP_LOCATION,
-        )
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
         bc = scan_data.get("body_composition", {})
         ha = scan_data.get("health_assessment", {})
