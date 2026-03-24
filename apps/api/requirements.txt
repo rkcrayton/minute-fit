@@ -17,3 +17,6 @@ mediapipe==0.10.14
 numpy
 Pillow
 pillow-heif
+
+# Gemini LLM (lightweight SDK)
+google-genai>=1.0.0

@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     # When set, the app connects via Unix socket at /cloudsql/<name>
     INSTANCE_CONNECTION_NAME: str = ""
 
+    # Gemini API
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash-lite"
+
     # CORS — comma-separated list of allowed origins
     ALLOWED_ORIGINS: str = "*"
 
@@ -55,3 +59,5 @@ _db_url = settings.database_url
 _safe_url = _db_url.split("@")[-1] if "@" in _db_url else _db_url
 _log.info(f"Database target: ...@{_safe_url}")
 _log.info(f"INSTANCE_CONNECTION_NAME: '{settings.INSTANCE_CONNECTION_NAME}'")
+_log.info(f"GEMINI_API_KEY set: {bool(settings.GEMINI_API_KEY)}")
+_log.info(f"GEMINI_MODEL: '{settings.GEMINI_MODEL}'")

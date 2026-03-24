@@ -320,6 +320,18 @@ def analyze_body(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
+    # Generate AI insights via Vertex AI Gemini
+    from services.llm import generate_scan_insights
+
+    user_profile = {
+        "age": current_user.age,
+        "gender": gender,
+        "height": current_user.height,
+        "weight": current_user.weight,
+        "fitness_goal": getattr(current_user, "fitness_goal", None),
+    }
+    ai_insights = generate_scan_insights(result, user_profile)
+
     # Persist result to database
     bc = result['body_composition']
     ha = result['health_assessment']
@@ -336,11 +348,13 @@ def analyze_body(
         health_risk_level=ha['risk_level'],
         health_recommendation=ha['recommendation'],
         measurements=result['measurements'],
+        ai_insights=ai_insights,
     )
     db.add(scan)
     db.commit()
     db.refresh(scan)
 
+    result['ai_insights'] = ai_insights
     return result
 
 
@@ -374,6 +388,7 @@ def get_scan_results(
             'risk_level': scan.health_risk_level,
             'recommendation': scan.health_recommendation,
         },
+        'ai_insights': scan.ai_insights,
         'created_at': scan.created_at,
     }
 
@@ -427,5 +442,55 @@ def get_measurement_image(
         return FileResponse(str(path), media_type="image/jpeg")
 
     raise HTTPException(status_code=404, detail="Measurement image not found")
+
+
+@router.post("/insights/{session_id}")
+def regenerate_insights(
+    session_id: str,
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Regenerate AI insights for an existing scan result."""
+    scan = db.query(ScanResult).filter(
+        ScanResult.session_id == session_id,
+        ScanResult.user_id == current_user.id,
+    ).first()
+
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan result not found")
+
+    from services.llm import generate_scan_insights
+
+    scan_data = {
+        "body_composition": {
+            "bmi": scan.bmi,
+            "body_fat_percentage": scan.body_fat_percentage,
+            "fat_mass_lbs": scan.fat_mass_kg,
+            "lean_mass_lbs": scan.lean_mass_kg,
+            "waist_to_hip_ratio": scan.waist_to_hip_ratio,
+        },
+        "health_assessment": {
+            "category": scan.health_category,
+            "risk_level": scan.health_risk_level,
+            "recommendation": scan.health_recommendation,
+        },
+        "measurements": scan.measurements or {},
+    }
+    user_profile = {
+        "age": current_user.age,
+        "gender": getattr(current_user, "gender", "neutral") or "neutral",
+        "height": current_user.height,
+        "weight": current_user.weight,
+        "fitness_goal": getattr(current_user, "fitness_goal", None),
+    }
+
+    ai_insights = generate_scan_insights(scan_data, user_profile)
+    if ai_insights is None:
+        raise HTTPException(status_code=503, detail="AI insights service unavailable")
+
+    scan.ai_insights = ai_insights
+    db.commit()
+
+    return {"ai_insights": ai_insights}
 
 

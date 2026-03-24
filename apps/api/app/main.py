@@ -13,6 +13,17 @@ from routers import users, exercises, user_exercises, scan, water
 async def lifespan(app: FastAPI):
     # Create tables if they don't exist
     Base.metadata.create_all(bind=engine)
+
+    # Add ai_insights column if missing (for existing databases)
+    with engine.connect() as conn:
+        result = conn.execute(text(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'scan_results' AND column_name = 'ai_insights'"
+        ))
+        if result.fetchone() is None:
+            conn.execute(text("ALTER TABLE scan_results ADD COLUMN ai_insights TEXT"))
+            conn.commit()
+
     # Seed exercise data (already idempotent)
     db = SessionLocal()
     try:
