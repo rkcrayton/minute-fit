@@ -9,3 +9,10 @@ test_main.http
 
 #virtual environment
 .venv/
+
+# pytest / coverage artifacts
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.pytest_cache/
