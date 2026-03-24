@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, JSON
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, JSON, Text
 from sqlalchemy.sql import func
 from database import Base
 
@@ -24,5 +24,8 @@ class ScanResult(Base):
 
     # Raw measurements (stored as JSON)
     measurements = Column(JSON, nullable=True)
+
+    # AI-generated insights from Vertex AI Gemini
+    ai_insights = Column(Text, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

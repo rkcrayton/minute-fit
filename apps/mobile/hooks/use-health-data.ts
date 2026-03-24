@@ -86,10 +86,9 @@ export function useHealthData() {
     // Distance walking/running (meters → miles)
     AppleHealthKit.getDistanceWalkingRunning(
       { startDate: todayStart, endDate: todayEnd },
-      (err: any, results: Array<{ value: number }>) => {
+      (err: any, results: { value: number }) => {
         if (!err && results) {
-          const totalMeters = results.reduce((sum, s) => sum + s.value, 0);
-          setDistanceMiles(parseFloat((totalMeters / 1609.344).toFixed(2)));
+          setDistanceMiles(parseFloat((results.value / 1609.344).toFixed(2)));
         }
       },
     );
@@ -97,10 +96,9 @@ export function useHealthData() {
     // Flights climbed
     AppleHealthKit.getFlightsClimbed(
       { startDate: todayStart, endDate: todayEnd },
-      (err: any, results: Array<{ value: number }>) => {
+      (err: any, results: { value: number }) => {
         if (!err && results) {
-          const total = results.reduce((sum, s) => sum + s.value, 0);
-          setFloorsClimbed(Math.round(total));
+          setFloorsClimbed(Math.round(results.value));
         }
       },
     );

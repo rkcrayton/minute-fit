@@ -26,6 +26,7 @@ type ScanResult = {
     risk_level: string;
     recommendation: string;
   };
+  ai_insights?: string | null;
   created_at?: string;
 };
 
@@ -150,6 +151,7 @@ export default function ScanResultsScreen() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   const load = async () => {
     if (!sessionId) {
@@ -172,6 +174,19 @@ export default function ScanResultsScreen() {
       setErrMsg(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const regenerateInsights = async () => {
+    if (!sessionId || regenerating) return;
+    setRegenerating(true);
+    try {
+      const res = await api.post<{ ai_insights: string }>(`/scan/insights/${sessionId}`);
+      setResult((prev) => prev ? { ...prev, ai_insights: res.data.ai_insights } : prev);
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setRegenerating(false);
     }
   };
 
@@ -282,6 +297,30 @@ export default function ScanResultsScreen() {
           {ha.recommendation}
         </Text>
       </Card>
+
+      {result.ai_insights ? (
+        <Card title="AI Insights">
+          <Text style={{ color: text, lineHeight: 22, fontSize: 14 }}>
+            {result.ai_insights}
+          </Text>
+          <Pressable
+            onPress={regenerateInsights}
+            disabled={regenerating}
+            style={{
+              marginTop: 10,
+              padding: 8,
+              borderRadius: 8,
+              backgroundColor: isDark ? "#252525" : "#E5E7EB",
+              alignItems: "center",
+              opacity: regenerating ? 0.5 : 1,
+            }}
+          >
+            <Text style={{ color: isDark ? "#F2F2F7" : "#111827", fontWeight: "700", fontSize: 13 }}>
+              {regenerating ? "Regenerating..." : "Regenerate Insights"}
+            </Text>
+          </Pressable>
+        </Card>
+      ) : null}
 
       <Card title="Body Composition">
         <View style={{ gap: 6 }}>
