@@ -96,6 +96,15 @@ app-example
 **/__pycache__/
 
 # ======================
+# pytest / coverage
+# ======================
+**/.coverage
+**/.coverage.*
+**/htmlcov/
+**/coverage.xml
+**/.pytest_cache/
+
+# ======================
 # Ignore image artifacts for now
 # ======================
 apps/api/app/artifacts

@@ -1,0 +1,10 @@
+[run]
+omit =
+    # CV/ML modules require real images and GPU — excluded from coverage
+    app/image_prep/*
+    app/utils/body_measurements.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
