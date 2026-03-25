@@ -16,11 +16,18 @@ async def lifespan(app: FastAPI):
 
     # Add ai_insights column if missing (for existing databases)
     with engine.connect() as conn:
-        result = conn.execute(text(
-            "SELECT column_name FROM information_schema.columns "
-            "WHERE table_name = 'scan_results' AND column_name = 'ai_insights'"
-        ))
-        if result.fetchone() is None:
+        dialect = engine.dialect.name
+        if dialect == "sqlite":
+            result = conn.execute(text("PRAGMA table_info(scan_results)"))
+            columns = [row[1] for row in result.fetchall()]
+            column_exists = "ai_insights" in columns
+        else:
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'scan_results' AND column_name = 'ai_insights'"
+            ))
+            column_exists = result.fetchone() is not None
+        if not column_exists:
             conn.execute(text("ALTER TABLE scan_results ADD COLUMN ai_insights TEXT"))
             conn.commit()
 

@@ -44,6 +44,7 @@ def test_login_success(client, test_user):
     assert r.status_code == 200
     data = r.json()
     assert "access_token" in data
+    assert "refresh_token" in data
     assert data["token_type"] == "bearer"
 
 
@@ -98,4 +99,55 @@ def test_update_profile_gender(client, auth_headers):
 
 def test_update_profile_no_token(client):
     r = client.put("/users/me", json={"first_name": "Hacker"})
+    assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# POST /users/token/refresh
+# ---------------------------------------------------------------------------
+
+def test_refresh_token_success(client, test_user):
+    login = client.post("/users/token", data={"username": "testuser", "password": "password123"})
+    refresh_token = login.json()["refresh_token"]
+
+    r = client.post("/users/token/refresh", json={"refresh_token": refresh_token})
+    assert r.status_code == 200
+    data = r.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+    assert data["token_type"] == "bearer"
+
+
+def test_refresh_token_rotated(client, test_user):
+    # Each refresh issues a new refresh token
+    login = client.post("/users/token", data={"username": "testuser", "password": "password123"})
+    original_refresh = login.json()["refresh_token"]
+
+    r = client.post("/users/token/refresh", json={"refresh_token": original_refresh})
+    assert r.json()["refresh_token"] != original_refresh
+
+
+def test_refresh_token_new_access_token_is_valid(client, test_user):
+    login = client.post("/users/token", data={"username": "testuser", "password": "password123"})
+    refresh_token = login.json()["refresh_token"]
+
+    r = client.post("/users/token/refresh", json={"refresh_token": refresh_token})
+    new_access_token = r.json()["access_token"]
+
+    me = client.get("/users/me", headers={"Authorization": f"Bearer {new_access_token}"})
+    assert me.status_code == 200
+    assert me.json()["username"] == "testuser"
+
+
+def test_refresh_token_invalid(client):
+    r = client.post("/users/token/refresh", json={"refresh_token": "not.a.valid.token"})
+    assert r.status_code == 401
+
+
+def test_refresh_token_rejects_access_token(client, test_user):
+    # An access token must not be accepted as a refresh token
+    login = client.post("/users/token", data={"username": "testuser", "password": "password123"})
+    access_token = login.json()["access_token"]
+
+    r = client.post("/users/token/refresh", json={"refresh_token": access_token})
     assert r.status_code == 401

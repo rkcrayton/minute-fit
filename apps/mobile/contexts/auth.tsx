@@ -63,14 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (savedToken) {
           setToken(savedToken);
           // Verify the token is still valid by fetching the user
+          // The axios interceptor will auto-refresh if the access token is expired
           const res = await api.get("/users/me", {
             headers: { Authorization: `Bearer ${savedToken}` },
           });
           setUser(res.data);
         }
       } catch {
-        // Token is expired or invalid — clear it
+        // Token is expired or invalid and refresh failed — clear everything
         await SecureStore.deleteItemAsync("token");
+        await SecureStore.deleteItemAsync("refresh_token");
       } finally {
         setIsLoading(false);
       }
@@ -88,8 +90,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
 
-    const newToken = tokenRes.data.access_token;
+    const { access_token: newToken, refresh_token: newRefreshToken } = tokenRes.data;
     await SecureStore.setItemAsync("token", newToken);
+    await SecureStore.setItemAsync("refresh_token", newRefreshToken);
     setToken(newToken);
 
     // Fetch the user profile
@@ -113,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     await SecureStore.deleteItemAsync("token");
+    await SecureStore.deleteItemAsync("refresh_token");
     setToken(null);
     setUser(null);
   }

@@ -46,12 +46,38 @@ def test_create_access_token_default_expiry_decodes():
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
     assert payload["sub"] == "alice"
     assert "exp" in payload
+    assert payload["type"] == "access"
 
 
 def test_create_access_token_custom_expiry():
     token = auth.create_access_token({"sub": "bob"}, expires_delta=timedelta(hours=2))
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
     assert payload["sub"] == "bob"
+    assert payload["type"] == "access"
+
+
+# ---------------------------------------------------------------------------
+# Refresh token creation
+# ---------------------------------------------------------------------------
+
+def test_create_refresh_token_returns_string():
+    token = auth.create_refresh_token({"sub": "alice"})
+    assert isinstance(token, str)
+    assert len(token) > 10
+
+
+def test_create_refresh_token_has_refresh_type():
+    token = auth.create_refresh_token({"sub": "alice"})
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+    assert payload["type"] == "refresh"
+    assert payload["sub"] == "alice"
+    assert "exp" in payload
+
+
+def test_access_and_refresh_tokens_are_different():
+    access = auth.create_access_token({"sub": "alice"})
+    refresh = auth.create_refresh_token({"sub": "alice"})
+    assert access != refresh
 
 
 # ---------------------------------------------------------------------------
@@ -94,4 +120,22 @@ def test_get_current_user_user_not_found(db):
     token = auth.create_access_token({"sub": "ghost_user"})
     with pytest.raises(HTTPException) as exc:
         auth.get_current_user(token=token, db=db)
+    assert exc.value.status_code == 401
+
+
+def test_get_current_user_rejects_refresh_token(db):
+    # A refresh token must not be accepted as an access token
+    from models.user import User
+
+    user = User(
+        email="rt@example.com",
+        username="rtuser",
+        hashed_password=auth.get_password_hash("pw"),
+    )
+    db.add(user)
+    db.commit()
+
+    refresh_token = auth.create_refresh_token({"sub": "rtuser"})
+    with pytest.raises(HTTPException) as exc:
+        auth.get_current_user(token=refresh_token, db=db)
     assert exc.value.status_code == 401
