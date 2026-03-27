@@ -5,17 +5,22 @@ import pytest
 # GET /user-exercises/
 # ---------------------------------------------------------------------------
 
-def test_list_user_exercises_empty(client):
-    r = client.get("/user-exercises/")
+def test_list_user_exercises_empty(client, auth_headers):
+    r = client.get("/user-exercises/", headers=auth_headers)
     assert r.status_code == 200
     assert r.json() == []
+
+
+def test_list_user_exercises_unauthenticated(client):
+    r = client.get("/user-exercises/")
+    assert r.status_code == 401
 
 
 # ---------------------------------------------------------------------------
 # POST /user-exercises/
 # ---------------------------------------------------------------------------
 
-def test_create_user_exercise_success(client, db, seeded_db, test_user):
+def test_create_user_exercise_success(client, db, seeded_db, test_user, auth_headers):
     from models.exercise import Exercise
 
     exercise = db.query(Exercise).first()
@@ -23,7 +28,7 @@ def test_create_user_exercise_success(client, db, seeded_db, test_user):
         "user_id": test_user.id,
         "exercise_id": exercise.id,
         "rep_count": 15,
-    })
+    }, headers=auth_headers)
     assert r.status_code == 201
     data = r.json()
     assert data["user_id"] == test_user.id
@@ -33,7 +38,19 @@ def test_create_user_exercise_success(client, db, seeded_db, test_user):
     assert "created_at" in data
 
 
-def test_create_user_exercise_user_not_found(client, seeded_db, db):
+def test_create_user_exercise_unauthenticated(client, seeded_db, db, test_user):
+    from models.exercise import Exercise
+
+    exercise = db.query(Exercise).first()
+    r = client.post("/user-exercises/", json={
+        "user_id": test_user.id,
+        "exercise_id": exercise.id,
+        "rep_count": 10,
+    })
+    assert r.status_code == 401
+
+
+def test_create_user_exercise_user_not_found(client, seeded_db, db, auth_headers):
     from models.exercise import Exercise
 
     exercise = db.query(Exercise).first()
@@ -41,22 +58,22 @@ def test_create_user_exercise_user_not_found(client, seeded_db, db):
         "user_id": 99999,
         "exercise_id": exercise.id,
         "rep_count": 10,
-    })
+    }, headers=auth_headers)
     assert r.status_code == 404
     assert "User" in r.json()["detail"]
 
 
-def test_create_user_exercise_exercise_not_found(client, db, test_user):
+def test_create_user_exercise_exercise_not_found(client, db, test_user, auth_headers):
     r = client.post("/user-exercises/", json={
         "user_id": test_user.id,
         "exercise_id": 99999,
         "rep_count": 10,
-    })
+    }, headers=auth_headers)
     assert r.status_code == 404
     assert "Exercise" in r.json()["detail"]
 
 
-def test_list_after_create(client, db, seeded_db, test_user):
+def test_list_after_create(client, db, seeded_db, test_user, auth_headers):
     from models.exercise import Exercise
 
     exercise = db.query(Exercise).first()
@@ -64,7 +81,7 @@ def test_list_after_create(client, db, seeded_db, test_user):
         "user_id": test_user.id,
         "exercise_id": exercise.id,
         "rep_count": 5,
-    })
-    r = client.get("/user-exercises/")
+    }, headers=auth_headers)
+    r = client.get("/user-exercises/", headers=auth_headers)
     assert r.status_code == 200
     assert len(r.json()) >= 1
