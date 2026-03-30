@@ -1,6 +1,5 @@
 import {
   GreetingHeader,
-  StartNowButton,
   NextWorkoutCard,
   TodayProgress,
   QuickPicks,
@@ -25,9 +24,12 @@ import {
   getAdaptiveStepGoal,
 } from "@/services/tracking-goals";
 import { createWaterLog, getTodayWaterSummary } from "@/services/water";
+import { getTodaySummary, getRecentWorkouts, type TodaySummary, type RecentWorkout } from "@/services/workouts";
 import { ScrollView } from "react-native";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import tw from "twrnc";
 
 export default function HomeScreen() {
@@ -52,12 +54,10 @@ export default function HomeScreen() {
 
   const userName = user?.first_name ?? user?.username ?? "User";
 
-  // TODO: Replace with real data once workout models exist in the backend
   const streakDays = 0;
-  const workoutsDone = 0;
-  const workoutsGoal = 5;
-  const minutesDone = 0;
-  const minutesGoal = 30;
+
+  const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
+  const [recentWorkouts, setRecentWorkouts] = useState<RecentWorkout[]>([]);
 
   const [waterOz, setWaterOz] = useState(0);
   const [isWaterLoading, setIsWaterLoading] = useState(false);
@@ -88,9 +88,35 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const loadTodaySummary = useCallback(async () => {
+    try {
+      const summary = await getTodaySummary();
+      setTodaySummary(summary);
+    } catch (error) {
+      // No scan yet or network error — silently ignore
+    }
+  }, []);
+
   useEffect(() => {
     loadWaterSummary();
   }, [loadWaterSummary]);
+
+  const loadRecentWorkouts = useCallback(async () => {
+    try {
+      const recent = await getRecentWorkouts();
+      setRecentWorkouts(recent);
+    } catch (error) {
+      // ignore
+    }
+  }, []);
+
+  // Refresh workout progress whenever the home screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      loadTodaySummary();
+      loadRecentWorkouts();
+    }, [loadTodaySummary, loadRecentWorkouts]),
+  );
 
   const handleAddWater = useCallback(async (amountOz: number) => {
     try {
@@ -101,29 +127,40 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const recentWorkouts: Workout[] = [
-    { name: "Mobility", duration: "2 min" },
-    { name: "Core", duration: "1 min" },
-    { name: "Walk", duration: "2 min", category: "Cardio" },
-  ];
+  const workoutsDone = todaySummary?.workouts_done_today ?? 0;
+  const workoutsGoal = todaySummary?.workouts_goal_today ?? 5;
+  const minutesDone = workoutsDone; // each session = 1 minute
+  const minutesGoal = workoutsGoal;
 
-  const handleStartNow = () => {
-    console.log("Start quick workout");
-  };
+  const nextExercise = todaySummary?.next_exercise ?? null;
 
   const handleStartWorkout = () => {
-    console.log("Start next workout");
-  };
-
-  const handleSwapWorkout = () => {
-    console.log("Swap workout");
+    if (!nextExercise) return;
+    router.push({
+      pathname: "/workout",
+      params: {
+        exerciseId: String(nextExercise.exercise_id),
+        name: nextExercise.name,
+        primaryMuscle: nextExercise.primary_muscle,
+        difficulty: nextExercise.difficulty,
+        timesPerDay: String(nextExercise.times_per_day),
+        doneToday: String(nextExercise.done_today),
+        durationSeconds: String(nextExercise.duration_seconds),
+      },
+    });
   };
 
   const handleQuickPick = (
     type: "reset" | "stretch" | "cardio" | "strength",
   ) => {
-    console.log(`Quick pick: ${type}`);
+    router.push("/(tabs)/plan");
   };
+
+  const recentWorkoutItems: Workout[] = recentWorkouts.map((w) => ({
+    name: w.name,
+    duration: `${Math.round(w.duration_seconds / 60) || 1} min`,
+    category: w.primary_muscle,
+  }));
 
   const healthUnavailableSubtitle = !isAvailable
     ? "Health data not available on this device"
@@ -244,6 +281,12 @@ export default function HomeScreen() {
     [selectedIds, buildTrackingItem],
   );
 
+  const getDifficultyLabel = (d: string): "Easy" | "Medium" | "Hard" => {
+    if (d === "medium") return "Medium";
+    if (d === "hard") return "Hard";
+    return "Easy";
+  };
+
   return (
     <>
       <ScrollView
@@ -252,17 +295,31 @@ export default function HomeScreen() {
       >
         <GreetingHeader userName={userName} streakDays={streakDays} />
 
-        <StartNowButton onPress={handleStartNow} />
-
-        <NextWorkoutCard
-          title="Push Ups"
-          duration="1 min"
-          category="Chest"
-          difficulty="Medium"
-          equipment="No equipment"
-          onStart={handleStartWorkout}
-          onSwap={handleSwapWorkout}
-        />
+        {nextExercise ? (
+          <NextWorkoutCard
+            title={nextExercise.name}
+            duration="1 min"
+            category={nextExercise.primary_muscle}
+            difficulty={getDifficultyLabel(nextExercise.difficulty)}
+            equipment="No equipment"
+            onStart={handleStartWorkout}
+          />
+        ) : todaySummary?.is_rest_day ? (
+          <NextWorkoutCard
+            title="Rest Day"
+            subtitle="Take it easy and recover. You've earned it."
+          />
+        ) : workoutsDone > 0 && workoutsGoal > 0 && workoutsDone >= workoutsGoal ? (
+          <NextWorkoutCard
+            title="All Done!"
+            subtitle={`You completed all ${workoutsGoal} workouts today.`}
+          />
+        ) : (
+          <NextWorkoutCard
+            title="No plan yet"
+            subtitle="Complete a body scan to get your workout plan."
+          />
+        )}
 
         <TodayProgress
           workoutsDone={workoutsDone}
@@ -281,7 +338,7 @@ export default function HomeScreen() {
 
         <QuickPicks onPress={handleQuickPick} />
 
-        <RecentWorkouts workouts={recentWorkouts} />
+        <RecentWorkouts workouts={recentWorkoutItems} />
       </ScrollView>
 
       <WaterLogModal

@@ -1,16 +1,19 @@
 import React, { useCallback, useState } from "react";
-import { StyleSheet, ScrollView, ActivityIndicator, Pressable } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { StyleSheet, ScrollView, ActivityIndicator, Pressable, TouchableOpacity } from "react-native";
+import { useFocusEffect, router } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import api from "@/services/api";
 
 type PlanExercise = {
   exercise_id: number;
   name: string;
   primary_muscle: string;
-  sets: number;
-  reps: number;
+  difficulty: string;
+  times_per_day: number;
+  duration_seconds: number;
+  done_today: number;
 };
 
 type DaySchedule = {
@@ -23,6 +26,7 @@ type WorkoutPlan = {
   title: string;
   subtitle: string;
   body_fat_percentage: number;
+  today: string;
   schedule: DaySchedule[];
 };
 
@@ -42,6 +46,9 @@ export default function PlanIndex() {
   const [error, setError] = useState<string | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
+  const tint = useThemeColor({}, "tint");
+  const successColor = "#10B981";
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
@@ -49,8 +56,12 @@ export default function PlanIndex() {
         setLoading(true);
         setError(null);
         try {
-          const res = await api.get("/exercises/plan");
-          if (!cancelled) setPlan(res.data);
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const res = await api.get("/exercises/plan", { params: { tz } });
+          if (!cancelled) {
+            setPlan(res.data);
+            setExpandedDay(res.data.today);
+          }
         } catch (err: any) {
           if (!cancelled) {
             const detail = err?.response?.data?.detail;
@@ -64,6 +75,21 @@ export default function PlanIndex() {
       return () => { cancelled = true; };
     }, [])
   );
+
+  const handleStartExercise = (ex: PlanExercise) => {
+    router.push({
+      pathname: "/workout",
+      params: {
+        exerciseId: String(ex.exercise_id),
+        name: ex.name,
+        primaryMuscle: ex.primary_muscle,
+        difficulty: ex.difficulty,
+        timesPerDay: String(ex.times_per_day),
+        doneToday: String(ex.done_today),
+        durationSeconds: String(ex.duration_seconds),
+      },
+    });
+  };
 
   if (loading) {
     return (
@@ -95,42 +121,79 @@ export default function PlanIndex() {
       </ThemedView>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {plan.schedule.map((day) => (
-          <Pressable
-            key={day.day}
-            onPress={() => setExpandedDay(expandedDay === day.day ? null : day.day)}
-            style={({ pressed }) => [styles.dayCard, pressed && styles.dayCardPressed]}
-          >
-            <ThemedView style={styles.dayHeader}>
-              <ThemedText type="defaultSemiBold">{DAY_LABELS[day.day]}</ThemedText>
-              {day.rest ? (
-                <ThemedView style={styles.restBadge}>
-                  <ThemedText style={styles.restText}>Rest</ThemedText>
-                </ThemedView>
-              ) : (
-                <ThemedText style={styles.exerciseCount}>
-                  {day.exercises.length} exercises
-                </ThemedText>
-              )}
-            </ThemedView>
-
-            {expandedDay === day.day && !day.rest && (
-              <ThemedView style={styles.exerciseList}>
-                {day.exercises.map((ex, i) => (
-                  <ThemedView key={i} style={styles.exerciseRow}>
-                    <ThemedView style={styles.exerciseInfo}>
-                      <ThemedText type="defaultSemiBold">{ex.name}</ThemedText>
-                      <ThemedText style={styles.muscleText}>{ex.primary_muscle}</ThemedText>
+        {plan.schedule.map((day) => {
+          const isToday = day.day === plan.today;
+          return (
+            <Pressable
+              key={day.day}
+              onPress={() => setExpandedDay(expandedDay === day.day ? null : day.day)}
+              style={({ pressed }) => [
+                styles.dayCard,
+                isToday && { borderColor: tint, borderWidth: 2 },
+                pressed && styles.dayCardPressed,
+              ]}
+            >
+              <ThemedView style={styles.dayHeader}>
+                <ThemedView style={styles.dayTitleRow}>
+                  <ThemedText type="defaultSemiBold">{DAY_LABELS[day.day]}</ThemedText>
+                  {isToday && (
+                    <ThemedView style={[styles.todayBadge, { backgroundColor: tint + "22", borderColor: tint }]}>
+                      <ThemedText style={[styles.todayText, { color: tint }]}>Today</ThemedText>
                     </ThemedView>
-                    <ThemedText style={styles.setsReps}>
-                      {ex.sets} × {ex.reps}
-                    </ThemedText>
+                  )}
+                </ThemedView>
+                {day.rest ? (
+                  <ThemedView style={styles.restBadge}>
+                    <ThemedText style={styles.restText}>Rest</ThemedText>
                   </ThemedView>
-                ))}
+                ) : (
+                  <ThemedText style={styles.exerciseCount}>
+                    {day.exercises.length} exercises
+                  </ThemedText>
+                )}
               </ThemedView>
-            )}
-          </Pressable>
-        ))}
+
+              {expandedDay === day.day && !day.rest && (
+                <ThemedView style={styles.exerciseList}>
+                  {day.exercises.map((ex, i) => {
+                    const isComplete = isToday && ex.done_today >= ex.times_per_day;
+                    return (
+                      <ThemedView key={i} style={styles.exerciseRow}>
+                        <ThemedView style={styles.exerciseInfo}>
+                          <ThemedText type="defaultSemiBold">{ex.name}</ThemedText>
+                          <ThemedText style={styles.muscleText}>{ex.primary_muscle}</ThemedText>
+                        </ThemedView>
+                        <ThemedView style={styles.exerciseRight}>
+                          {isToday ? (
+                            <ThemedText style={[
+                              styles.durationLabel,
+                              isComplete && { color: successColor },
+                            ]}>
+                              {ex.done_today}/{ex.times_per_day} done
+                            </ThemedText>
+                          ) : (
+                            <ThemedText style={styles.durationLabel}>
+                              {ex.times_per_day}x · 1 min
+                            </ThemedText>
+                          )}
+                          {isToday && !isComplete && (
+                            <TouchableOpacity
+                              style={[styles.startBtn, { backgroundColor: tint }]}
+                              onPress={() => handleStartExercise(ex)}
+                              activeOpacity={0.85}
+                            >
+                              <ThemedText style={styles.startBtnText}>Start</ThemedText>
+                            </TouchableOpacity>
+                          )}
+                        </ThemedView>
+                      </ThemedView>
+                    );
+                  })}
+                </ThemedView>
+              )}
+            </Pressable>
+          );
+        })}
       </ScrollView>
     </ThemedView>
   );
@@ -165,6 +228,15 @@ const styles = StyleSheet.create({
   },
   dayCardPressed: { opacity: 0.9 },
   dayHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  dayTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+
+  todayBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 1,
+  },
+  todayText: { fontSize: 11, fontWeight: "600" },
 
   restBadge: {
     borderRadius: 999,
@@ -185,7 +257,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "rgba(150,150,150,0.15)",
   },
-  exerciseInfo: { gap: 2 },
+  exerciseInfo: { gap: 2, flex: 1 },
   muscleText: { fontSize: 12, opacity: 0.6 },
-  setsReps: { fontSize: 15, opacity: 0.9 },
+  exerciseRight: { alignItems: "flex-end", gap: 6 },
+  durationLabel: { fontSize: 13, opacity: 0.7 },
+  startBtn: {
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  startBtnText: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },
 });
