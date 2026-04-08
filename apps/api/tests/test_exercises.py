@@ -99,3 +99,19 @@ def test_workout_plan_schedule_has_rest_days(client, complete_auth_headers, seed
     schedule = r.json()["schedule"]
     rest_days = [d for d in schedule if d["rest"]]
     assert len(rest_days) >= 1
+
+
+# ---------------------------------------------------------------------------
+# GET /exercises/today-summary
+# ---------------------------------------------------------------------------
+
+def test_today_summary_returns_day_and_exercises(client, complete_auth_headers, seeded_db, db, complete_user):
+    _insert_scan(db, complete_user.id, body_fat=10.0)
+    r = client.get("/exercises/today-summary", headers=complete_auth_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert "day" in data
+    assert "exercises" in data
+    assert "workouts_done_today" in data
+    assert "workouts_goal_today" in data
+    assert data["workouts_done_today"] == 0

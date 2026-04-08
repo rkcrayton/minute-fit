@@ -17,8 +17,38 @@ def get_user_exercises(db: Session = Depends(get_db), current_user: User = Depen
     return db.query(UserExercise).filter(UserExercise.user_id == current_user.id).all()
 
 
+@router.get("/recent")
+def get_recent_workouts(
+    limit: int = 3,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth.get_current_user),
+):
+    rows = (
+        db.query(UserExercise, Exercise)
+        .join(Exercise, UserExercise.exercise_id == Exercise.id)
+        .filter(UserExercise.user_id == current_user.id)
+        .order_by(UserExercise.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "name": exercise.name,
+            "primary_muscle": exercise.primary_muscle,
+            "duration_seconds": ue.rep_count,
+            "created_at": ue.created_at.isoformat(),
+        }
+        for ue, exercise in rows
+    ]
+
+
+#Rep count = seconds
 @router.post("/", response_model=UserExerciseResponse, status_code=status.HTTP_201_CREATED)
-def create_user_exercise(payload: UserExerciseCreate, db: Session = Depends(get_db), current_user: User = Depends(auth.get_current_user)):
+def create_user_exercise(
+    payload: UserExerciseCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth.get_current_user),
+):
     if not db.query(User).filter(User.id == payload.user_id).first():
         raise HTTPException(status_code=404, detail="User not found")
 
