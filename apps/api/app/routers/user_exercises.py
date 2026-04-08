@@ -49,13 +49,16 @@ def create_user_exercise(
     db: Session = Depends(get_db),
     current_user: User = Depends(auth.get_current_user),
 ):
+    if not db.query(User).filter(User.id == payload.user_id).first():
+        raise HTTPException(status_code=404, detail="User not found")
+
     if not db.query(Exercise).filter(Exercise.id == payload.exercise_id).first():
         raise HTTPException(status_code=404, detail="Exercise not found")
 
     entry = UserExercise(
-        user_id=current_user.id,
+        user_id=payload.user_id,
         exercise_id=payload.exercise_id,
-        rep_count=payload.duration_seconds,
+        rep_count=payload.rep_count,
         created_at=datetime.now(timezone.utc),
     )
     db.add(entry)

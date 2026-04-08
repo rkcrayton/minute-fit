@@ -3,8 +3,9 @@ from datetime import datetime
 
 
 class UserExerciseCreate(BaseModel):
+    user_id: int
     exercise_id: int
-    duration_seconds: int = 60
+    rep_count: int
 
 
 class UserExerciseResponse(BaseModel):
