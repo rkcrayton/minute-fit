@@ -1,0 +1,36 @@
+name: Backend CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/api/**'   
+      # Only trigger on backend changes in PRs
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'   
+      # Only trigger deploy when backend changes are merged
+
+jobs:
+  test:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+    # Runs on both PRs and pushes to main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd apps/api
+          pip install -r requirements.txt -r requirements-test.txt
+
+      - name: Run tests
+        run: |
+          cd apps/api
+          pytest
