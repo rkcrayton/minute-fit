@@ -73,6 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Token is expired or invalid and refresh failed — clear everything
         await SecureStore.deleteItemAsync("token");
         await SecureStore.deleteItemAsync("refresh_token");
+        setToken(null);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }

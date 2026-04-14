@@ -1,0 +1,47 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+
+jobs:
+  test:
+    name: Run Jest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect frontend changes
+        id: changes
+        run: |
+          git fetch origin main --depth=1
+          CHANGED=$(git diff --name-only origin/main...HEAD -- apps/mobile/ | wc -l)
+          echo "frontend_changed=$([[ $CHANGED -gt 0 ]] && echo true || echo false)" >> $GITHUB_OUTPUT
+
+      - name: Set up Node
+        if: steps.changes.outputs.frontend_changed == 'true' || github.event_name == 'push'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install dependencies
+        if: steps.changes.outputs.frontend_changed == 'true' || github.event_name == 'push'
+        run: |
+          cd apps/mobile
+          npm ci
+
+      - name: Run tests
+        if: steps.changes.outputs.frontend_changed == 'true' || github.event_name == 'push'
+        run: |
+          cd apps/mobile
+          npm test
+
+      - name: Skip (no frontend changes)
+        if: steps.changes.outputs.frontend_changed == 'false' && github.event_name == 'pull_request'
+        run: echo "No frontend changes detected — skipping Jest"

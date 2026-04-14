@@ -105,6 +105,11 @@ app-example
 **/.pytest_cache/
 
 # ======================
+# Jest coverage
+# ======================
+**/coverage/
+
+# ======================
 # Ignore image artifacts for now
 # ======================
 apps/api/app/artifacts

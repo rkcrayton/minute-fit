@@ -1,5 +1,3 @@
-import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
 import {
   Camera,
   ChevronLeft,
@@ -8,10 +6,9 @@ import {
   RotateCcw,
   User,
 } from "lucide-react-native";
-import React, { useMemo, useState } from "react";
+import React from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -19,66 +16,22 @@ import {
 } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { useAuth } from "@/contexts/auth";
-import { getBaseURL } from "@/services/api";
-import { analyzeScan } from "../../../services/scan";
-
-type ViewKey = "front" | "side" | "back";
-
-type Picked = {
-  uri: string;
-  fileName?: string | null;
-  mimeType?: string | null;
-  fileSize?: number | null;
-};
-
-const STEPS: {
-  key: ViewKey;
-  label: string;
-  instruction: string;
-  tip: string;
-}[] = [
-  {
-    key: "front",
-    label: "Front View",
-    instruction:
-      "Stand straight, facing the camera with your arms slightly away from your sides.",
-    tip: "Full body · Arms relaxed · Good lighting",
-  },
-  {
-    key: "side",
-    label: "Side View",
-    instruction:
-      "Turn 90° to your right. Stand straight with arms relaxed at your sides.",
-    tip: "Full body · Look straight ahead · Feet shoulder-width apart",
-  },
-  {
-    key: "back",
-    label: "Back View",
-    instruction:
-      "Turn so your back faces the camera. Arms slightly away from your sides.",
-    tip: "Full body · Stand straight · Hair up if possible",
-  },
-];
-
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
-const ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/heic",
-  "image/heif",
-];
+import { useScanCapture, STEPS } from "@/hooks/use-scan-capture";
 
 export default function ScanCaptureScreen() {
-  const [photos, setPhotos] = useState<Record<ViewKey, Picked | null>>({
-    front: null,
-    side: null,
-    back: null,
-  });
-  const [step, setStep] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const { token } = useAuth();
+  const {
+    photos,
+    step,
+    loading,
+    currentStep,
+    currentPhoto,
+    isLastStep,
+    nextDisabled,
+    pickImage,
+    clearPhoto,
+    handleNext,
+    goToStep,
+  } = useScanCapture();
 
   const bg = useThemeColor({}, "background");
   const surface = useThemeColor({}, "surface");
@@ -87,109 +40,6 @@ export default function ScanCaptureScreen() {
   const tint = useThemeColor({}, "tint");
   const text = useThemeColor({}, "text");
   const textSecondary = useThemeColor({}, "textSecondary");
-
-  const currentStep = STEPS[step];
-  const currentPhoto = photos[currentStep.key];
-  const isLastStep = step === STEPS.length - 1;
-  const allDone = useMemo(
-    () => STEPS.every((s) => photos[s.key] !== null),
-    [photos],
-  );
-
-  const requestPerms = async () => {
-    const cam = await ImagePicker.requestCameraPermissionsAsync();
-    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (cam.status !== "granted" || lib.status !== "granted") {
-      Alert.alert(
-        "Permissions needed",
-        "Camera and photo library permissions are required.",
-      );
-      return false;
-    }
-    return true;
-  };
-
-  const validateAsset = (asset: ImagePicker.ImagePickerAsset): string | null => {
-    if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE_BYTES) {
-      return "Photo is too large. Please use an image under 20 MB.";
-    }
-    if (asset.mimeType && !ALLOWED_MIME_TYPES.includes(asset.mimeType)) {
-      return "Invalid file type. Please use a JPG, PNG, or HEIC photo.";
-    }
-    return null;
-  };
-
-  const pickImage = async (fromCamera: boolean) => {
-    const ok = await requestPerms();
-    if (!ok) return;
-
-    const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({
-          quality: 0.8,
-          allowsEditing: false,
-        })
-      : await ImagePicker.launchImageLibraryAsync({
-          quality: 0.8,
-          allowsEditing: false,
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        });
-
-    if (result.canceled) return;
-
-    const asset = result.assets[0];
-    const err = validateAsset(asset);
-    if (err) {
-      Alert.alert("Invalid photo", err);
-      return;
-    }
-
-    setPhotos((prev) => ({
-      ...prev,
-      [currentStep.key]: {
-        uri: asset.uri,
-        fileName: asset.fileName ?? null,
-        mimeType: asset.mimeType ?? null,
-        fileSize: asset.fileSize ?? null,
-      },
-    }));
-  };
-
-  const clearPhoto = () => {
-    setPhotos((prev) => ({ ...prev, [currentStep.key]: null }));
-  };
-
-  const handleNext = () => {
-    if (isLastStep) {
-      handleAnalyze();
-    } else {
-      setStep((s) => s + 1);
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!allDone || !token) return;
-
-    setLoading(true);
-    try {
-      const result = await analyzeScan({
-        baseUrl: getBaseURL(),
-        token,
-        front: photos.front!,
-        side: photos.side!,
-        back: photos.back!,
-      });
-      router.push({
-        pathname: "/(tabs)/scan/results",
-        params: { sessionId: result.session_id },
-      });
-    } catch (e: any) {
-      Alert.alert("Scan failed", e?.message ?? "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const nextDisabled = !currentPhoto || loading || (isLastStep && !allDone);
 
   return (
     <ScrollView
@@ -242,7 +92,7 @@ export default function ScanCaptureScreen() {
             return (
               <Pressable
                 key={s.key}
-                onPress={() => setStep(i)}
+                onPress={() => goToStep(i)}
                 style={{ flex: 1, height: 6, borderRadius: 3, overflow: "hidden" }}
               >
                 <View
@@ -396,7 +246,7 @@ export default function ScanCaptureScreen() {
         <View style={{ flexDirection: "row", gap: 10 }}>
           {step > 0 && (
             <Pressable
-              onPress={() => setStep((s) => s - 1)}
+              onPress={() => goToStep(step - 1)}
               style={({ pressed }) => ({
                 flexDirection: "row",
                 alignItems: "center",
