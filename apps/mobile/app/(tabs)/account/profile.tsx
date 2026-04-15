@@ -9,9 +9,14 @@ import {
   Platform,
   ActivityIndicator,
   StyleSheet,
+  Image,
+  TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
+import { Camera } from "lucide-react-native";
 import { useAuth } from "@/contexts/auth";
+import { useAvatarPicker } from "@/hooks/use-avatar-picker";
+import { getBaseURL } from "@/services/api";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -20,7 +25,12 @@ type GenderOption = "male" | "female" | "neutral";
 
 export default function ProfileEditScreen() {
   const { user, updateProfile } = useAuth();
+  const { showPicker, uploading } = useAvatarPicker();
   const backgroundColor = useThemeColor({}, "background");
+
+  const avatarSource = user?.profile_picture
+    ? { uri: `${getBaseURL()}/users/me/avatar` }
+    : require("@/assets/images/Todo.png");
 
   // Convert stored height (total inches) back to feet + inches for display
   const storedFeet = user?.height ? Math.floor(user.height / 12).toString() : "";
@@ -94,6 +104,23 @@ export default function ProfileEditScreen() {
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Avatar */}
+        <ThemedView
+          style={[styles.card, { backgroundColor: cardBg, borderColor }, styles.avatarCard]}
+        >
+          <TouchableOpacity onPress={showPicker} activeOpacity={0.7} style={styles.avatarWrapper}>
+            <View style={styles.avatarRing}>
+              <Image source={avatarSource} style={styles.avatarImage} />
+              <View style={styles.cameraOverlay}>
+                <Camera size={16} color="#FFFFFF" />
+              </View>
+            </View>
+            <ThemedText style={[styles.changePhotoText, { color: "#3B82F6" }]}>
+              {uploading ? "Uploading..." : "Change Photo"}
+            </ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
+
         {/* Name */}
         <ThemedView
           style={[styles.card, { backgroundColor: cardBg, borderColor }]}
@@ -324,4 +351,28 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   saveBtnText: { color: "#FFFFFF", fontWeight: "900", fontSize: 16 },
+  avatarCard: { alignItems: "center" as const },
+  avatarWrapper: { alignItems: "center" as const },
+  avatarRing: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    borderColor: "#3B82F6",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  avatarImage: { width: 90, height: 90, borderRadius: 45 },
+  cameraOverlay: {
+    position: "absolute" as const,
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#3B82F6",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  changePhotoText: { marginTop: 8, fontWeight: "600" as const, fontSize: 14 },
 });

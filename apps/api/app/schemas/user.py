@@ -12,6 +12,7 @@ class UserBase(BaseModel):
     height: Optional[float] = None
     fitness_goal: Optional[str] = None
     gender: Optional[str] = None
+    profile_picture: Optional[str] = None
 
 
 class UserCreate(UserBase):

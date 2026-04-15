@@ -1,18 +1,49 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { Image, View, ImageSourcePropType } from "react-native";
+import { Image, View, ImageSourcePropType, TouchableOpacity } from "react-native";
+import { Camera } from "lucide-react-native";
 import tw from "twrnc";
 
 export type AccountHeaderProps = {
   userName: string;
-  userImage: ImageSourcePropType;
+  userImage: ImageSourcePropType | string;
   logoImage: ImageSourcePropType;
+  onAvatarPress?: () => void;
 };
 
-export function AccountHeader({ userName, userImage, logoImage }: AccountHeaderProps) {
+export function AccountHeader({ userName, userImage, logoImage, onAvatarPress }: AccountHeaderProps) {
   const cardBgColor = useThemeColor({}, "surface");
   const borderColor = useThemeColor({}, "border");
+
+  const imageSource =
+    typeof userImage === "string" ? { uri: userImage } : userImage;
+
+  const avatarContent = (
+    <View style={tw`mb-4 shadow-lg`}>
+      <View
+        style={[
+          tw`w-28 h-28 rounded-full items-center justify-center border-4`,
+          { borderColor: "#3B82F6" },
+        ]}
+      >
+        <Image
+          source={imageSource}
+          style={tw`w-full h-full rounded-full`}
+        />
+        {onAvatarPress && (
+          <View
+            style={[
+              tw`absolute bottom-0 right-0 w-8 h-8 rounded-full items-center justify-center`,
+              { backgroundColor: "#3B82F6" },
+            ]}
+          >
+            <Camera size={16} color="#FFFFFF" />
+          </View>
+        )}
+      </View>
+    </View>
+  );
 
   return (
     <ThemedView style={tw`mb-6`}>
@@ -31,19 +62,13 @@ export function AccountHeader({ userName, userImage, logoImage }: AccountHeaderP
         ]}
       >
         {/* Profile Image */}
-        <View style={tw`mb-4 shadow-lg`}>
-          <View
-            style={[
-              tw`w-28 h-28 rounded-full items-center justify-center border-4`,
-              { borderColor: "#3B82F6" },
-            ]}
-          >
-            <Image
-              source={userImage}
-              style={tw`w-full h-full rounded-full`}
-            />
-          </View>
-        </View>
+        {onAvatarPress ? (
+          <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.7}>
+            {avatarContent}
+          </TouchableOpacity>
+        ) : (
+          avatarContent
+        )}
 
         {/* User Name */}
         <ThemedText type="title" style={tw`text-3xl tracking-wide`}>

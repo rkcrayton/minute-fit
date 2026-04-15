@@ -1,7 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import io
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
+from PIL import Image as PILImage
 import auth
 from models.user import User
 from schemas.user import UserCreate, UserResponse, UserUpdate
@@ -10,6 +15,36 @@ from jose import JWTError, jwt
 from database import get_db
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+# Avatar storage
+AVATARS_DIR = Path(__file__).resolve().parent.parent / "artifacts" / "avatars"
+AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+
+MAX_AVATAR_BYTES = 5 * 1024 * 1024  # 5 MB
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".heic", ".heif"}
+
+
+def _check_magic_bytes(data: bytes) -> bool:
+    if data[:3] == b'\xff\xd8\xff':
+        return True
+    if data[:8] == b'\x89PNG\r\n\x1a\n':
+        return True
+    if len(data) >= 12 and data[4:8] == b'ftyp':
+        return True
+    return False
+
+
+def _sanitize_avatar(raw: bytes) -> bytes:
+    try:
+        img = PILImage.open(io.BytesIO(raw))
+        img.verify()
+    except Exception:
+        raise HTTPException(status_code=400, detail="File could not be decoded as a valid image.")
+    img = PILImage.open(io.BytesIO(raw))
+    img = img.convert("RGB")
+    out = io.BytesIO()
+    img.save(out, format="JPEG", quality=90)
+    return out.getvalue()
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -119,3 +154,45 @@ def update_user_profile(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.post("/me/avatar", response_model=UserResponse)
+def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="File must be jpg, png, or heic.")
+
+    raw = file.file.read(MAX_AVATAR_BYTES + 1)
+    if len(raw) > MAX_AVATAR_BYTES:
+        raise HTTPException(status_code=413, detail="File exceeds the 5 MB size limit.")
+
+    if not _check_magic_bytes(raw):
+        raise HTTPException(status_code=400, detail="File content does not match a recognised image format.")
+
+    clean = _sanitize_avatar(raw)
+
+    filename = f"avatar_{current_user.id}.jpg"
+    dest = AVATARS_DIR / filename
+    with open(dest, "wb") as f:
+        f.write(clean)
+
+    current_user.profile_picture = filename
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.get("/me/avatar")
+def get_avatar(current_user: User = Depends(auth.get_current_user)):
+    if not current_user.profile_picture:
+        raise HTTPException(status_code=404, detail="No avatar set")
+
+    path = AVATARS_DIR / current_user.profile_picture
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Avatar file not found")
+
+    return FileResponse(str(path), media_type="image/jpeg")

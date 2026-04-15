@@ -152,8 +152,12 @@ export default function HealthSettingsScreen() {
       <ThemedView style={tw`px-2`}>
         <ThemedText style={[tw`text-xs leading-relaxed`, { color: subtextColor }]}>
           {isAuthorized
-            ? "GottaMinute reads your step count and active energy from Apple Health. You can manage permissions in your device's Settings > Health > Data Access."
-            : "Connect Apple Health to automatically track your steps and calories burned. GottaMinute will only read data — we never write to your health records."}
+            ? Platform.OS === "ios"
+              ? "GottaMinute reads your step count and active energy from Apple Health. You can manage permissions in your device's Settings > Health > Data Access."
+              : "GottaMinute reads your step count and active energy from Health Connect. You can manage permissions in the Health Connect app."
+            : Platform.OS === "ios"
+              ? "Connect Apple Health to automatically track your steps and calories burned. GottaMinute will only read data — we never write to your health records."
+              : "Connect Health Connect to automatically track your steps and calories burned. GottaMinute will only read data — we never write to your health records."}
         </ThemedText>
       </ThemedView>
     </View>

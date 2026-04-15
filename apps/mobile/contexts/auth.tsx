@@ -14,6 +14,7 @@ interface User {
   height: number | null;
   fitness_goal: string | null;
   gender: string | null;
+  profile_picture: string | null;
 }
 
 interface RegisterData {
@@ -46,6 +47,7 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: ProfileUpdate) => Promise<void>;
+  uploadAvatar: (uri: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -116,6 +118,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.data);
   }
 
+  async function uploadAvatar(uri: string) {
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      name: "avatar.jpg",
+      type: "image/jpeg",
+    } as any);
+    const res = await api.post("/users/me/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    setUser(res.data);
+  }
+
   async function logout() {
     await SecureStore.deleteItemAsync("token");
     await SecureStore.deleteItemAsync("refresh_token");
@@ -124,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, updateProfile, uploadAvatar }}>
       {children}
     </AuthContext.Provider>
   );
