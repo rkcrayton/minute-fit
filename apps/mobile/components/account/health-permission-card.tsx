@@ -3,7 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { useHealthData } from "@/hooks/use-health-data";
 import { Heart, Footprints, Flame, Check } from "lucide-react-native";
-import { TouchableOpacity, View } from "react-native";
+import { Platform, TouchableOpacity, View } from "react-native";
 import tw from "twrnc";
 
 export function HealthPermissionCard() {
@@ -36,8 +36,7 @@ export function HealthPermissionCard() {
           Permissions
         </ThemedText>
         <ThemedText style={[tw`text-sm`, { color: subtextColor }]}>
-          Health integration is currently available on iOS only. Android Health
-          Connect support is coming soon.
+          Health integration is not available on this device.
         </ThemedText>
       </ThemedView>
     );
@@ -80,7 +79,7 @@ export function HealthPermissionCard() {
           </View>
           <View>
             <ThemedText type="defaultSemiBold" style={tw`text-base`}>
-              Apple Health
+              {Platform.OS === "ios" ? "Apple Health" : "Health Connect"}
             </ThemedText>
             <ThemedText style={[tw`text-xs`, { color: subtextColor }]}>
               {isAuthorized ? "Connected" : "Tap to connect"}
