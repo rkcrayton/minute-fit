@@ -1,4 +1,10 @@
+import io
+
 import pytest
+
+import auth as auth_module
+import routers.users as users_module
+from helpers import make_jpeg_bytes
 
 
 # ---------------------------------------------------------------------------
@@ -151,3 +157,97 @@ def test_refresh_token_rejects_access_token(client, test_user):
 
     r = client.post("/users/token/refresh", json={"refresh_token": access_token})
     assert r.status_code == 401
+
+
+def test_refresh_token_missing_sub(client):
+    # Refresh token with no "sub" claim
+    token = auth_module.create_refresh_token({"data": "no-sub"})
+    r = client.post("/users/token/refresh", json={"refresh_token": token})
+    assert r.status_code == 401
+
+
+def test_refresh_token_user_not_found(client):
+    # Valid refresh token but username doesn't exist in the DB
+    token = auth_module.create_refresh_token({"sub": "ghost_user_xyz"})
+    r = client.post("/users/token/refresh", json={"refresh_token": token})
+    assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# POST /users/me/avatar
+# ---------------------------------------------------------------------------
+
+def test_upload_avatar_unauthenticated(client):
+    r = client.post("/users/me/avatar", files={
+        "file": ("avatar.jpg", io.BytesIO(make_jpeg_bytes()), "image/jpeg"),
+    })
+    assert r.status_code == 401
+
+
+def test_upload_avatar_invalid_extension(client, auth_headers):
+    r = client.post("/users/me/avatar", headers=auth_headers, files={
+        "file": ("avatar.txt", io.BytesIO(b"not an image"), "text/plain"),
+    })
+    assert r.status_code == 400
+    assert "jpg" in r.json()["detail"].lower() or "png" in r.json()["detail"].lower()
+
+
+def test_upload_avatar_too_large(client, auth_headers):
+    big = b'\xff\xd8\xff' + b'\x00' * (5 * 1024 * 1024 + 1)
+    r = client.post("/users/me/avatar", headers=auth_headers, files={
+        "file": ("avatar.jpg", io.BytesIO(big), "image/jpeg"),
+    })
+    assert r.status_code == 413
+
+
+def test_upload_avatar_bad_magic_bytes(client, auth_headers):
+    r = client.post("/users/me/avatar", headers=auth_headers, files={
+        "file": ("avatar.jpg", io.BytesIO(b'%PDF-1.4' + b'\x00' * 100), "image/jpeg"),
+    })
+    assert r.status_code == 400
+    assert "format" in r.json()["detail"].lower()
+
+
+def test_upload_avatar_success(client, auth_headers, mocker, tmp_path):
+    mocker.patch.object(users_module, "AVATARS_DIR", tmp_path)
+    r = client.post("/users/me/avatar", headers=auth_headers, files={
+        "file": ("avatar.jpg", io.BytesIO(make_jpeg_bytes()), "image/jpeg"),
+    })
+    assert r.status_code == 200
+    assert r.json()["profile_picture"] is not None
+
+
+# ---------------------------------------------------------------------------
+# GET /users/me/avatar
+# ---------------------------------------------------------------------------
+
+def test_get_avatar_unauthenticated(client):
+    r = client.get("/users/me/avatar")
+    assert r.status_code == 401
+
+
+def test_get_avatar_no_avatar_set(client, auth_headers):
+    r = client.get("/users/me/avatar", headers=auth_headers)
+    assert r.status_code == 404
+    assert "No avatar" in r.json()["detail"]
+
+
+def test_get_avatar_file_missing(client, auth_headers, db, test_user):
+    # User has profile_picture set but the file doesn't exist on disk
+    test_user.profile_picture = "avatar_99999.jpg"
+    db.commit()
+    r = client.get("/users/me/avatar", headers=auth_headers)
+    assert r.status_code == 404
+    assert "not found" in r.json()["detail"].lower()
+
+
+def test_get_avatar_success(client, auth_headers, mocker, tmp_path):
+    mocker.patch.object(users_module, "AVATARS_DIR", tmp_path)
+    # Upload first
+    client.post("/users/me/avatar", headers=auth_headers, files={
+        "file": ("avatar.jpg", io.BytesIO(make_jpeg_bytes()), "image/jpeg"),
+    })
+    # Then retrieve
+    r = client.get("/users/me/avatar", headers=auth_headers)
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("image/jpeg")

@@ -7,7 +7,7 @@ on:
     branches: [main]
     paths:
       - 'apps/api/**'
-      # Only trigger deploy when backend changes are merged
+  workflow_dispatch:
 
 jobs:
   test:
@@ -16,31 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Detect backend changes
-        id: changes
-        run: |
-          git fetch origin main --depth=1
-          CHANGED=$(git diff --name-only origin/main...HEAD -- apps/api/ | wc -l)
-          echo "backend_changed=$([[ $CHANGED -gt 0 ]] && echo true || echo false)" >> $GITHUB_OUTPUT
-
       - name: Set up Python
-        if: steps.changes.outputs.backend_changed == 'true' || github.event_name == 'push'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        if: steps.changes.outputs.backend_changed == 'true' || github.event_name == 'push'
         run: |
           cd apps/api
           pip install -r requirements.txt -r requirements-test.txt
 
       - name: Run tests
-        if: steps.changes.outputs.backend_changed == 'true' || github.event_name == 'push'
         run: |
           cd apps/api
           pytest
-
-      - name: Skip (no backend changes)
-        if: steps.changes.outputs.backend_changed == 'false' && github.event_name == 'pull_request'
-        run: echo "No backend changes detected — skipping pytest"
