@@ -1,34 +1,21 @@
 import React, { useCallback, useState } from "react";
-import { StyleSheet, ScrollView, ActivityIndicator, Pressable, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Pressable,
+  TouchableOpacity,
+} from "react-native";
 import { useFocusEffect, router } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import api from "@/services/api";
-
-type PlanExercise = {
-  exercise_id: number;
-  name: string;
-  primary_muscle: string;
-  difficulty: string;
-  times_per_day: number;
-  duration_seconds: number;
-  done_today: number;
-};
-
-type DaySchedule = {
-  day: string;
-  rest: boolean;
-  exercises: PlanExercise[];
-};
-
-type WorkoutPlan = {
-  title: string;
-  subtitle: string;
-  body_fat_percentage: number;
-  today: string;
-  schedule: DaySchedule[];
-};
+import {
+  getMyPlan,
+  DAYS,
+  type WorkoutPlan,
+  type PlanEntryEnriched,
+} from "@/services/workout-plans";
 
 const DAY_LABELS: Record<string, string> = {
   monday: "Monday",
@@ -39,6 +26,12 @@ const DAY_LABELS: Record<string, string> = {
   saturday: "Saturday",
   sunday: "Sunday",
 };
+
+function todayKey(): string {
+  return new Date()
+    .toLocaleDateString("en-US", { weekday: "long" })
+    .toLowerCase();
+}
 
 export default function PlanIndex() {
   const [plan, setPlan] = useState<WorkoutPlan | null>(null);
@@ -56,11 +49,10 @@ export default function PlanIndex() {
         setLoading(true);
         setError(null);
         try {
-          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          const res = await api.get("/exercises/plan", { params: { tz } });
+          const data = await getMyPlan();
           if (!cancelled) {
-            setPlan(res.data);
-            setExpandedDay(res.data.today);
+            setPlan(data);
+            if (data) setExpandedDay(todayKey());
           }
         } catch (err: any) {
           if (!cancelled) {
@@ -72,11 +64,13 @@ export default function PlanIndex() {
         }
       }
       fetchPlan();
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+      };
     }, [])
   );
 
-  const handleStartExercise = (ex: PlanExercise) => {
+  const handleStartExercise = (ex: PlanEntryEnriched) => {
     router.push({
       pathname: "/workout",
       params: {
@@ -85,7 +79,7 @@ export default function PlanIndex() {
         primaryMuscle: ex.primary_muscle,
         difficulty: ex.difficulty,
         timesPerDay: String(ex.times_per_day),
-        doneToday: String(ex.done_today),
+        doneToday: "0",
         durationSeconds: String(ex.duration_seconds),
       },
     });
@@ -99,34 +93,75 @@ export default function PlanIndex() {
     );
   }
 
-  if (error || !plan) {
+  if (error) {
     return (
       <ThemedView style={styles.centered}>
-        <ThemedText style={styles.errorText}>{error || "No plan available."}</ThemedText>
-        <ThemedText style={styles.hint}>Complete a body scan to generate your plan.</ThemedText>
+        <ThemedText style={styles.errorText}>{error}</ThemedText>
       </ThemedView>
     );
   }
 
+  // ---- Empty state: no plan yet ------------------------------------------
+  if (!plan) {
+    return (
+      <ThemedView style={styles.centered}>
+        <ThemedText type="title" style={styles.emptyTitle}>
+          No workout plan yet
+        </ThemedText>
+        <ThemedText style={styles.hint}>
+          Build one in seconds — we&apos;ll tailor it to your goals and equipment.
+        </ThemedText>
+        <TouchableOpacity
+          style={[styles.primaryBtn, { backgroundColor: tint }]}
+          onPress={() => router.push("/(tabs)/plan/generate" as any)}
+          activeOpacity={0.85}
+        >
+          <ThemedText style={styles.primaryBtnText}>Generate My Plan</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
+
+  const today = todayKey();
+
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title">{plan.title}</ThemedText>
-        <ThemedText style={styles.subtitle}>{plan.subtitle}</ThemedText>
-        <ThemedView style={styles.bfPill}>
-          <ThemedText style={styles.bfText}>
-            Based on {plan.body_fat_percentage}% body fat
-          </ThemedText>
+        <ThemedView style={styles.headerRow}>
+          <ThemedView style={styles.headerTextCol}>
+            <ThemedText type="title">{plan.title}</ThemedText>
+            {plan.subtitle ? (
+              <ThemedText style={styles.subtitle}>{plan.subtitle}</ThemedText>
+            ) : null}
+          </ThemedView>
+          <ThemedView style={styles.headerActions}>
+            <TouchableOpacity
+              style={[styles.headerBtn, { borderColor: tint }]}
+              onPress={() => router.push("/(tabs)/plan/edit" as any)}
+              activeOpacity={0.8}
+            >
+              <ThemedText style={[styles.headerBtnText, { color: tint }]}>Edit</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.headerBtn, { borderColor: tint }]}
+              onPress={() => router.push("/(tabs)/plan/generate" as any)}
+              activeOpacity={0.8}
+            >
+              <ThemedText style={[styles.headerBtnText, { color: tint }]}>Regenerate</ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
         </ThemedView>
       </ThemedView>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {plan.schedule.map((day) => {
-          const isToday = day.day === plan.today;
+        {DAYS.map((day) => {
+          const entries = plan.schedule[day] ?? [];
+          const isRest = entries.length === 0;
+          const isToday = day === today;
           return (
             <Pressable
-              key={day.day}
-              onPress={() => setExpandedDay(expandedDay === day.day ? null : day.day)}
+              key={day}
+              onPress={() => setExpandedDay(expandedDay === day ? null : day)}
               style={({ pressed }) => [
                 styles.dayCard,
                 isToday && { borderColor: tint, borderWidth: 2 },
@@ -135,60 +170,53 @@ export default function PlanIndex() {
             >
               <ThemedView style={styles.dayHeader}>
                 <ThemedView style={styles.dayTitleRow}>
-                  <ThemedText type="defaultSemiBold">{DAY_LABELS[day.day]}</ThemedText>
+                  <ThemedText type="defaultSemiBold">{DAY_LABELS[day]}</ThemedText>
                   {isToday && (
-                    <ThemedView style={[styles.todayBadge, { backgroundColor: tint + "22", borderColor: tint }]}>
+                    <ThemedView
+                      style={[
+                        styles.todayBadge,
+                        { backgroundColor: tint + "22", borderColor: tint },
+                      ]}
+                    >
                       <ThemedText style={[styles.todayText, { color: tint }]}>Today</ThemedText>
                     </ThemedView>
                   )}
                 </ThemedView>
-                {day.rest ? (
+                {isRest ? (
                   <ThemedView style={styles.restBadge}>
                     <ThemedText style={styles.restText}>Rest</ThemedText>
                   </ThemedView>
                 ) : (
                   <ThemedText style={styles.exerciseCount}>
-                    {day.exercises.length} exercises
+                    {entries.length} exercises
                   </ThemedText>
                 )}
               </ThemedView>
 
-              {expandedDay === day.day && !day.rest && (
+              {expandedDay === day && !isRest && (
                 <ThemedView style={styles.exerciseList}>
-                  {day.exercises.map((ex, i) => {
-                    const isComplete = isToday && ex.done_today >= ex.times_per_day;
-                    return (
-                      <ThemedView key={i} style={styles.exerciseRow}>
-                        <ThemedView style={styles.exerciseInfo}>
-                          <ThemedText type="defaultSemiBold">{ex.name}</ThemedText>
-                          <ThemedText style={styles.muscleText}>{ex.primary_muscle}</ThemedText>
-                        </ThemedView>
-                        <ThemedView style={styles.exerciseRight}>
-                          {isToday ? (
-                            <ThemedText style={[
-                              styles.durationLabel,
-                              isComplete && { color: successColor },
-                            ]}>
-                              {ex.done_today}/{ex.times_per_day} done
-                            </ThemedText>
-                          ) : (
-                            <ThemedText style={styles.durationLabel}>
-                              {ex.times_per_day}x · 1 min
-                            </ThemedText>
-                          )}
-                          {isToday && !isComplete && (
-                            <TouchableOpacity
-                              style={[styles.startBtn, { backgroundColor: tint }]}
-                              onPress={() => handleStartExercise(ex)}
-                              activeOpacity={0.85}
-                            >
-                              <ThemedText style={styles.startBtnText}>Start</ThemedText>
-                            </TouchableOpacity>
-                          )}
-                        </ThemedView>
+                  {entries.map((ex, i) => (
+                    <ThemedView key={`${ex.exercise_id}-${i}`} style={styles.exerciseRow}>
+                      <ThemedView style={styles.exerciseInfo}>
+                        <ThemedText type="defaultSemiBold">{ex.name}</ThemedText>
+                        <ThemedText style={styles.muscleText}>{ex.primary_muscle}</ThemedText>
                       </ThemedView>
-                    );
-                  })}
+                      <ThemedView style={styles.exerciseRight}>
+                        <ThemedText style={styles.durationLabel}>
+                          {ex.times_per_day}x · {Math.round(ex.duration_seconds / 60)} min
+                        </ThemedText>
+                        {isToday && (
+                          <TouchableOpacity
+                            style={[styles.startBtn, { backgroundColor: tint }]}
+                            onPress={() => handleStartExercise(ex)}
+                            activeOpacity={0.85}
+                          >
+                            <ThemedText style={styles.startBtnText}>Start</ThemedText>
+                          </TouchableOpacity>
+                        )}
+                      </ThemedView>
+                    </ThemedView>
+                  ))}
                 </ThemedView>
               )}
             </Pressable>
@@ -201,22 +229,32 @@ export default function PlanIndex() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24, gap: 12 },
   errorText: { fontSize: 16, textAlign: "center", opacity: 0.8 },
-  hint: { marginTop: 8, opacity: 0.6, textAlign: "center" },
+  hint: { opacity: 0.75, textAlign: "center" },
 
-  header: { gap: 6, paddingBottom: 16 },
-  subtitle: { opacity: 0.75 },
-  bfPill: {
-    alignSelf: "flex-start",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: "rgba(150,150,150,0.25)",
+  emptyTitle: { textAlign: "center" },
+  primaryBtn: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 14,
   },
-  bfText: { fontSize: 12, opacity: 0.8 },
+  primaryBtnText: { color: "#FFFFFF", fontWeight: "800", fontSize: 16 },
+
+  header: { paddingBottom: 12 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
+  headerTextCol: { flex: 1, gap: 6 },
+  headerActions: { flexDirection: "row", gap: 8 },
+  headerBtn: {
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+  },
+  headerBtnText: { fontSize: 13, fontWeight: "700" },
+
+  subtitle: { opacity: 0.75 },
 
   scrollContent: { paddingBottom: 24, gap: 10 },
 

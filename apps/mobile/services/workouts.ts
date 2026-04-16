@@ -21,7 +21,7 @@ export type TodaySummary = {
 
 export async function getTodaySummary(): Promise<TodaySummary> {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const res = await api.get("/exercises/today-summary", { params: { tz } });
+  const res = await api.get("/workout-plans/me/today-summary", { params: { tz } });
   return res.data;
 }
 
