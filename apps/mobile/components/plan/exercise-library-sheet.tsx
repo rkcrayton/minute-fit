@@ -100,11 +100,7 @@ export function ExerciseLibrarySheet({ visible, onClose, onSelect }: Props) {
           autoCapitalize="none"
         />
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
+        <View style={styles.filterRow}>
           {EQUIPMENT_FILTERS.map((f) => {
             const selected = equipment === f.value;
             return (
@@ -112,13 +108,13 @@ export function ExerciseLibrarySheet({ visible, onClose, onSelect }: Props) {
                 key={f.value || "all"}
                 onPress={() => setEquipment(f.value)}
                 style={[
-                  styles.filterChip,
+                  styles.filterBlock,
                   selected && { backgroundColor: tint, borderColor: tint },
                 ]}
               >
                 <ThemedText
                   style={[
-                    styles.filterChipText,
+                    styles.filterBlockText,
                     selected && { color: "#FFFFFF" },
                   ]}
                 >
@@ -127,13 +123,9 @@ export function ExerciseLibrarySheet({ visible, onClose, onSelect }: Props) {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
+        <View style={styles.filterRow}>
           {DIFFICULTY_FILTERS.map((f) => {
             const selected = difficulty === f.value;
             return (
@@ -141,13 +133,13 @@ export function ExerciseLibrarySheet({ visible, onClose, onSelect }: Props) {
                 key={f.value || "any"}
                 onPress={() => setDifficulty(f.value)}
                 style={[
-                  styles.filterChip,
+                  styles.filterBlock,
                   selected && { backgroundColor: tint, borderColor: tint },
                 ]}
               >
                 <ThemedText
                   style={[
-                    styles.filterChipText,
+                    styles.filterBlockText,
                     selected && { color: "#FFFFFF" },
                   ]}
                 >
@@ -156,7 +148,7 @@ export function ExerciseLibrarySheet({ visible, onClose, onSelect }: Props) {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
 
         {loading ? (
           <ActivityIndicator style={{ marginTop: 16 }} />
@@ -207,15 +199,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  filterRow: { flexDirection: "row", gap: 8, paddingVertical: 4 },
-  filterChip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingVertical: 4 },
+  filterBlock: {
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: "rgba(150,150,150,0.3)",
   },
-  filterChipText: { fontSize: 13, fontWeight: "600" },
+  filterBlockText: { fontSize: 13, fontWeight: "600", textAlign: "center" },
 
   list: { flex: 1 },
   listContent: { paddingVertical: 8, gap: 8 },

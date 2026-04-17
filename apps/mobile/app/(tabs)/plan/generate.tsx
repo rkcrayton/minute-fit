@@ -33,9 +33,11 @@ type Props = {
   hideBack?: boolean;
   /** Whether to render a "Skip" secondary action (onboarding only). */
   onSkip?: () => void;
+  /** Custom cancel handler (for inline usage). When set, replaces the default router.back(). */
+  onCancel?: () => void;
 };
 
-export function GeneratePlanForm({ onSuccess, hideBack = false, onSkip }: Props) {
+export function GeneratePlanForm({ onSuccess, hideBack = false, onSkip, onCancel }: Props) {
   const tint = useThemeColor({}, "tint");
   const textColor = useThemeColor({}, "text");
 
@@ -207,6 +209,10 @@ export function GeneratePlanForm({ onSuccess, hideBack = false, onSkip }: Props)
         {onSkip ? (
           <Pressable onPress={onSkip} style={styles.skipBtn} disabled={submitting}>
             <ThemedText style={styles.skipText}>Skip for now</ThemedText>
+          </Pressable>
+        ) : onCancel ? (
+          <Pressable onPress={onCancel} style={styles.skipBtn} disabled={submitting}>
+            <ThemedText style={styles.skipText}>Cancel</ThemedText>
           </Pressable>
         ) : !hideBack ? (
           <Pressable onPress={() => router.back()} style={styles.skipBtn} disabled={submitting}>

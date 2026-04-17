@@ -92,9 +92,8 @@ def test_workout_tracking_flow(client, seeded_db):
     # Log the first exercise
     exercise_id = exercises[0]["id"]
     log_r = client.post("/user-exercises/", json={
-        "user_id": user_id,
         "exercise_id": exercise_id,
-        "rep_count": 30,
+        "duration_seconds": 30,
     }, headers=headers)
     assert log_r.status_code == 201
     logged = log_r.json()
@@ -147,9 +146,8 @@ def test_today_summary_progress_updates(client, seeded_db, db, complete_user, co
     # Log one of today's planned exercises
     today_exercise = data_before["exercises"][0]
     client.post("/user-exercises/", json={
-        "user_id": complete_user.id,
         "exercise_id": today_exercise["exercise_id"],
-        "rep_count": 60,
+        "duration_seconds": 60,
     }, headers=complete_auth_headers)
 
     # Done count should have incremented by exactly 1
@@ -260,9 +258,8 @@ def test_user_data_isolation(client, seeded_db):
     # Alice logs a workout and water
     exercises = client.get("/exercises/").json()
     client.post("/user-exercises/", json={
-        "user_id": user_id_a,
         "exercise_id": exercises[0]["id"],
-        "rep_count": 10,
+        "duration_seconds": 10,
     }, headers=headers_a)
     client.post("/water/logs", json={"amount_oz": 32.0}, headers=headers_a)
 
