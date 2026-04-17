@@ -53,7 +53,24 @@ async def lifespan(app: FastAPI):
 
         conn.commit()
 
-    # Seed exercise data (already idempotent) — backstop for empty DBs.
+    # Add profile_picture column if missing (for existing databases)
+    with engine.connect() as conn:
+        dialect = engine.dialect.name
+        if dialect == "sqlite":
+            result = conn.execute(text("PRAGMA table_info(users)"))
+            columns = [row[1] for row in result.fetchall()]
+            pp_exists = "profile_picture" in columns
+        else:
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'users' AND column_name = 'profile_picture'"
+            ))
+            pp_exists = result.fetchone() is not None
+        if not pp_exists:
+            conn.execute(text("ALTER TABLE users ADD COLUMN profile_picture VARCHAR"))
+            conn.commit()
+
+    # Seed exercise data (already idempotent)
     db = SessionLocal()
     try:
         exercises.seed_exercises(db)

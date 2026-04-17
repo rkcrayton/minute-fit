@@ -1,16 +1,18 @@
 PYTHON = .venv/bin/python
 PIP    = .venv/bin/pip
 
-.PHONY: help install install-test test test-v coverage dev
+.PHONY: help install install-test test test-v test-unit test-integration coverage dev
 
 help:
 	@echo "Available commands:"
-	@echo "  make install       Install app dependencies"
-	@echo "  make install-test  Install test dependencies"
-	@echo "  make test          Run all tests"
-	@echo "  make test-v        Run tests (verbose)"
-	@echo "  make coverage      Run tests + generate HTML coverage report"
-	@echo "  make dev           Start dev server (uvicorn --reload)"
+	@echo "  make install            Install app dependencies"
+	@echo "  make install-test       Install test dependencies"
+	@echo "  make test               Run all tests"
+	@echo "  make test-v             Run all tests (verbose)"
+	@echo "  make test-unit          Run unit tests only"
+	@echo "  make test-integration   Run integration tests only"
+	@echo "  make coverage           Run tests + generate HTML coverage report"
+	@echo "  make dev                Start dev server (uvicorn --reload)"
 
 install:
 	$(PIP) install -r requirements.txt
@@ -23,6 +25,12 @@ test:
 
 test-v:
 	$(PYTHON) -m pytest tests/ -v
+
+test-unit:
+	$(PYTHON) -m pytest tests/unit/
+
+test-integration:
+	$(PYTHON) -m pytest tests/integration/
 
 coverage:
 	$(PYTHON) -m pytest tests/ --cov-report=html

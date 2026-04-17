@@ -50,7 +50,17 @@
         }
       ],
       "expo-asset",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "react-native-health-connect",
+        {
+          "permissions": [
+            "android.permission.health.READ_STEPS",
+            "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+            "android.permission.health.READ_EXERCISE"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

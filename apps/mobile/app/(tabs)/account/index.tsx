@@ -5,13 +5,20 @@ import { AccountHeader, GoalCards, Settings, type Goal, type SettingsItem } from
 import { useAuth } from "@/contexts/auth";
 import { useOnboarding } from "@/contexts/onboarding";
 import { useHealthData } from "@/hooks/use-health-data";
+import { useAvatarPicker } from "@/hooks/use-avatar-picker";
+import { getBaseURL } from "@/services/api";
 import tw from "twrnc";
 
 export default function AccountScreen() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const backgroundColor = useThemeColor({}, "background");
   const { setOnboarded } = useOnboarding();
   const { steps, activeEnergy, isAuthorized } = useHealthData();
+  const { showPicker } = useAvatarPicker();
+
+  const avatarImage = user?.profile_picture
+    ? { uri: `${getBaseURL()}/users/me/avatar`, headers: { Authorization: `Bearer ${token}` } }
+    : require("@/assets/images/Todo.png");
 
   // Goal cards pull real data from HealthKit when connected,
   // otherwise show "--" to indicate no data yet
@@ -64,8 +71,9 @@ export default function AccountScreen() {
     >
       <AccountHeader
         userName={[user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username || "User"}
-        userImage={require("@/assets/images/Todo.png")}
+        userImage={avatarImage}
         logoImage={require("@/assets/images/gottaminute_transparent_big.png")}
+        onAvatarPress={showPicker}
       />
 
       <GoalCards goals={goals} />

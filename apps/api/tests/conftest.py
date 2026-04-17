@@ -5,7 +5,6 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-1234567890ab")
 os.environ.setdefault("ALLOWED_ORIGINS", "*")
 
-import io
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -124,11 +123,4 @@ def seeded_db(db):
     return db
 
 
-def make_jpeg_bytes(width: int = 10, height: int = 10) -> bytes:
-    """Return minimal valid JPEG bytes for upload tests."""
-    from PIL import Image
-
-    img = Image.new("RGB", (width, height), color=(128, 128, 128))
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG")
-    return buf.getvalue()
+from helpers import make_jpeg_bytes  # noqa: F401 — re-exported for backward compat

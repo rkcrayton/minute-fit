@@ -1,9 +1,11 @@
-.PHONY: help test test-v coverage test-frontend test-frontend-watch coverage-frontend dev docker-up docker-down docker-logs
+.PHONY: help test test-v test-unit test-integration coverage test-frontend test-frontend-watch coverage-frontend dev docker-up docker-down docker-logs
 
 help:
 	@echo "Available commands:"
-	@echo "  make test                  Run API tests"
-	@echo "  make test-v                Run API tests (verbose)"
+	@echo "  make test                  Run all API tests"
+	@echo "  make test-v                Run all API tests (verbose)"
+	@echo "  make test-unit             Run API unit tests only"
+	@echo "  make test-integration      Run API integration tests only"
 	@echo "  make coverage              Run API tests + generate HTML coverage report"
 	@echo "  make test-frontend         Run frontend Jest tests"
 	@echo "  make test-frontend-watch   Run frontend Jest tests in watch mode"
@@ -18,6 +20,12 @@ test:
 
 test-v:
 	$(MAKE) -C apps/api test-v
+
+test-unit:
+	$(MAKE) -C apps/api test-unit
+
+test-integration:
+	$(MAKE) -C apps/api test-integration
 
 coverage:
 	$(MAKE) -C apps/api coverage

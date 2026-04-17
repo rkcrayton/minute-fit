@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { NativeModules, Platform } from "react-native";
+import { useHealthConnect } from "./use-health-connect";
 
 const AppleHealthKit = NativeModules.AppleHealthKit;
 
@@ -26,7 +27,7 @@ const permissions = {
   },
 };
 
-export function useHealthData() {
+function useAppleHealthData() {
   const [steps, setSteps] = useState<number>(0);
   const [activeEnergy, setActiveEnergy] = useState<number>(0);
   const [exerciseMinutes, setExerciseMinutes] = useState<number>(0);
@@ -206,3 +207,7 @@ export function useHealthData() {
     },
   };
 }
+
+const isAndroid = Platform.OS === "android";
+
+export const useHealthData = isAndroid ? useHealthConnect : useAppleHealthData;

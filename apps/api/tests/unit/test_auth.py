@@ -1,6 +1,5 @@
 from datetime import timedelta
-import pytest
-from fastapi import HTTPException
+
 from jose import jwt
 
 import auth
@@ -78,64 +77,3 @@ def test_access_and_refresh_tokens_are_different():
     access = auth.create_access_token({"sub": "alice"})
     refresh = auth.create_refresh_token({"sub": "alice"})
     assert access != refresh
-
-
-# ---------------------------------------------------------------------------
-# get_current_user
-# ---------------------------------------------------------------------------
-
-def test_get_current_user_valid(db):
-    from models.user import User
-
-    user = User(
-        email="cu@example.com",
-        username="curuser",
-        hashed_password=auth.get_password_hash("pw"),
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    token = auth.create_access_token({"sub": "curuser"})
-    result = auth.get_current_user(token=token, db=db)
-    assert result.username == "curuser"
-
-
-def test_get_current_user_invalid_token(db):
-    with pytest.raises(HTTPException) as exc:
-        auth.get_current_user(token="not.a.valid.token", db=db)
-    assert exc.value.status_code == 401
-
-
-def test_get_current_user_missing_sub(db):
-    # Token with no "sub" claim
-    token = auth.create_access_token({"data": "no-sub"})
-    with pytest.raises(HTTPException) as exc:
-        auth.get_current_user(token=token, db=db)
-    assert exc.value.status_code == 401
-
-
-def test_get_current_user_user_not_found(db):
-    # Token references a username that doesn't exist
-    token = auth.create_access_token({"sub": "ghost_user"})
-    with pytest.raises(HTTPException) as exc:
-        auth.get_current_user(token=token, db=db)
-    assert exc.value.status_code == 401
-
-
-def test_get_current_user_rejects_refresh_token(db):
-    # A refresh token must not be accepted as an access token
-    from models.user import User
-
-    user = User(
-        email="rt@example.com",
-        username="rtuser",
-        hashed_password=auth.get_password_hash("pw"),
-    )
-    db.add(user)
-    db.commit()
-
-    refresh_token = auth.create_refresh_token({"sub": "rtuser"})
-    with pytest.raises(HTTPException) as exc:
-        auth.get_current_user(token=refresh_token, db=db)
-    assert exc.value.status_code == 401
