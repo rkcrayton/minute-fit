@@ -94,6 +94,15 @@ def seed_exercises(db: Session):
         for data in SEED_EXERCISES:
             db.add(Exercise(**data))
         db.commit()
+    else:
+        # Backfill equipment/category on rows that pre-date the column additions
+        seed_by_name = {s["name"]: s for s in SEED_EXERCISES}
+        for ex in db.query(Exercise).filter(Exercise.equipment.is_(None)).all():
+            seed = seed_by_name.get(ex.name)
+            if seed:
+                ex.equipment = seed.get("equipment", "bodyweight")
+                ex.category = seed.get("category", "strength")
+        db.commit()
 
 
 @router.get("/", response_model=List[ExerciseResponse])
