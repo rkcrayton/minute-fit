@@ -8,6 +8,8 @@ import {
   Pressable,
   ActivityIndicator,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -83,105 +85,115 @@ export function ExerciseLibrarySheet({ visible, onClose, onSelect }: Props) {
       presentationStyle="formSheet"
       onRequestClose={onClose}
     >
-      <ThemedView style={styles.container}>
-        <View style={styles.headerRow}>
-          <ThemedText type="title">Exercise library</ThemedText>
-          <TouchableOpacity onPress={onClose}>
-            <ThemedText style={[styles.closeText, { color: tint }]}>Close</ThemedText>
-          </TouchableOpacity>
-        </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ThemedView style={styles.container}>
+          <View style={styles.headerRow}>
+            <ThemedText type="title">Exercise library</ThemedText>
+            <TouchableOpacity onPress={onClose}>
+              <ThemedText style={[styles.closeText, { color: tint }]}>Close</ThemedText>
+            </TouchableOpacity>
+          </View>
 
-        <TextInput
-          placeholder="Search exercises…"
-          placeholderTextColor="rgba(150,150,150,0.6)"
-          value={query}
-          onChangeText={setQuery}
-          style={[styles.searchInput, { color: textColor }]}
-          autoCapitalize="none"
-        />
+          <TextInput
+            placeholder="Search exercises…"
+            placeholderTextColor="rgba(150,150,150,0.6)"
+            value={query}
+            onChangeText={setQuery}
+            style={[styles.searchInput, { color: textColor }]}
+            autoCapitalize="none"
+          />
 
-        <View style={styles.filterRow}>
-          {EQUIPMENT_FILTERS.map((f) => {
-            const selected = equipment === f.value;
-            return (
-              <Pressable
-                key={f.value || "all"}
-                onPress={() => setEquipment(f.value)}
-                style={[
-                  styles.filterBlock,
-                  selected && { backgroundColor: tint, borderColor: tint },
-                ]}
-              >
-                <ThemedText
+          <View style={styles.filterRow}>
+            {EQUIPMENT_FILTERS.map((f) => {
+              const selected = equipment === f.value;
+              return (
+                <Pressable
+                  key={f.value || "all"}
+                  onPress={() => setEquipment(f.value)}
                   style={[
-                    styles.filterBlockText,
-                    selected && { color: "#FFFFFF" },
+                    styles.filterBlock,
+                    selected && { backgroundColor: tint, borderColor: tint },
                   ]}
                 >
-                  {f.label}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <ThemedText
+                    style={[
+                      styles.filterBlockText,
+                      selected && { color: "#FFFFFF" },
+                    ]}
+                  >
+                    {f.label}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
 
-        <View style={styles.filterRow}>
-          {DIFFICULTY_FILTERS.map((f) => {
-            const selected = difficulty === f.value;
-            return (
-              <Pressable
-                key={f.value || "any"}
-                onPress={() => setDifficulty(f.value)}
-                style={[
-                  styles.filterBlock,
-                  selected && { backgroundColor: tint, borderColor: tint },
-                ]}
-              >
-                <ThemedText
+          <View style={styles.filterRow}>
+            {DIFFICULTY_FILTERS.map((f) => {
+              const selected = difficulty === f.value;
+              return (
+                <Pressable
+                  key={f.value || "any"}
+                  onPress={() => setDifficulty(f.value)}
                   style={[
-                    styles.filterBlockText,
-                    selected && { color: "#FFFFFF" },
+                    styles.filterBlock,
+                    selected && { backgroundColor: tint, borderColor: tint },
                   ]}
                 >
-                  {f.label}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <ThemedText
+                    style={[
+                      styles.filterBlockText,
+                      selected && { color: "#FFFFFF" },
+                    ]}
+                  >
+                    {f.label}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
 
-        {loading ? (
-          <ActivityIndicator style={{ marginTop: 16 }} />
-        ) : (
-          <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-            {items.length === 0 ? (
-              <ThemedText style={styles.empty}>No exercises match your filters.</ThemedText>
-            ) : (
-              items.map((ex) => (
-                <TouchableOpacity
-                  key={ex.id}
-                  style={styles.row}
-                  onPress={() => onSelect(ex)}
-                  activeOpacity={0.7}
-                >
-                  <View style={{ flex: 1 }}>
-                    <ThemedText type="defaultSemiBold">{ex.name}</ThemedText>
-                    <ThemedText style={styles.rowMeta}>
-                      {ex.primary_muscle}
-                      {ex.equipment ? ` · ${ex.equipment}` : ""}
-                    </ThemedText>
-                  </View>
-                  <View style={[styles.badge, { borderColor: tint }]}>
-                    <ThemedText style={[styles.badgeText, { color: tint }]}>
-                      {ex.difficulty}
-                    </ThemedText>
-                  </View>
-                </TouchableOpacity>
-              ))
-            )}
-          </ScrollView>
-        )}
-      </ThemedView>
+          {loading ? (
+            <ActivityIndicator style={{ marginTop: 16 }} />
+          ) : (
+            <ScrollView
+              style={styles.list}
+              contentContainerStyle={styles.listContent}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
+              {items.length === 0 ? (
+                <ThemedText style={styles.empty}>No exercises match your filters.</ThemedText>
+              ) : (
+                items.map((ex) => (
+                  <TouchableOpacity
+                    key={ex.id}
+                    style={styles.row}
+                    onPress={() => onSelect(ex)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <ThemedText type="defaultSemiBold">{ex.name}</ThemedText>
+                      <ThemedText style={styles.rowMeta}>
+                        {ex.primary_muscle}
+                        {ex.equipment ? ` · ${ex.equipment}` : ""}
+                      </ThemedText>
+                    </View>
+                    <View style={[styles.badge, { borderColor: tint }]}>
+                      <ThemedText style={[styles.badgeText, { color: tint }]}>
+                        {ex.difficulty}
+                      </ThemedText>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+          )}
+        </ThemedView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
