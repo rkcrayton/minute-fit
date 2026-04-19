@@ -63,7 +63,7 @@ export default function Profile() {
       console.warn("Failed to save profile to server:", error);
     }
 
-    router.replace("/(tabs)" as any)
+    router.replace("/(onboarding)/plan-generate" as any)
   };
 
   return (

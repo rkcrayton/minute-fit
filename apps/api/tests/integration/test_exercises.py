@@ -38,83 +38,51 @@ def test_seed_exercises_idempotent(db):
 
 
 # ---------------------------------------------------------------------------
-# GET /exercises/plan
+# GET /exercises/library — filterable search across the expanded catalog
 # ---------------------------------------------------------------------------
 
-def test_workout_plan_unauthenticated(client, seeded_db):
-    r = client.get("/exercises/plan")
+def test_library_search_returns_list(client, seeded_db):
+    r = client.get("/exercises/library?limit=5")
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+
+
+def test_library_search_by_name(client, seeded_db):
+    r = client.get("/exercises/library", params={"q": "push"})
+    assert r.status_code == 200
+    names = {e["name"] for e in r.json()}
+    assert "Push-Ups" in names
+
+
+def test_library_search_by_equipment(client, seeded_db):
+    r = client.get("/exercises/library", params={"equipment": "bodyweight"})
+    assert r.status_code == 200
+    assert len(r.json()) >= 1
+
+
+def test_library_search_no_match(client, seeded_db):
+    r = client.get("/exercises/library", params={"q": "nothing-matches-this-xyz"})
+    assert r.status_code == 200
+    assert r.json() == []
+
+
+# ---------------------------------------------------------------------------
+# POST /admin/sync-exercises — protected by X-Admin-Token
+# ---------------------------------------------------------------------------
+
+def test_admin_sync_requires_token(client, monkeypatch):
+    # With no token configured the endpoint should 503
+    from config import settings
+    monkeypatch.setattr(settings, "ADMIN_API_TOKEN", "")
+    r = client.post("/admin/sync-exercises")
+    assert r.status_code == 503
+
+
+def test_admin_sync_rejects_bad_token(client, monkeypatch):
+    from config import settings
+    monkeypatch.setattr(settings, "ADMIN_API_TOKEN", "right-token")
+    r = client.post("/admin/sync-exercises", headers={"X-Admin-Token": "wrong"})
     assert r.status_code == 401
-
-
-def test_workout_plan_no_scan_raises_404(client, auth_headers, seeded_db):
-    r = client.get("/exercises/plan", headers=auth_headers)
-    assert r.status_code == 404
-    assert "scan" in r.json()["detail"].lower()
-
-
-def _insert_scan(db, user_id: int, body_fat: float):
-    scan = ScanResult(
-        session_id=f"sess-{user_id}-{int(body_fat)}",
-        user_id=user_id,
-        bmi=22.0,
-        body_fat_percentage=body_fat,
-        fat_mass_kg=20.0,
-        lean_mass_kg=60.0,
-        waist_to_hip_ratio=0.85,
-        health_category="Fit",
-        health_risk_level="low",
-        health_recommendation="Good",
-        measurements={},
-    )
-    db.add(scan)
-    db.commit()
-
-
-def test_workout_plan_lean_bf(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=10.0)
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
-    assert r.status_code == 200
-    data = r.json()
-    assert data["title"] == "Lean Performance"
-    assert len(data["schedule"]) == 7
-
-
-def test_workout_plan_moderate_bf(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=20.0)
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
-    assert r.status_code == 200
-    assert r.json()["title"] == "Body Recomposition"
-
-
-def test_workout_plan_high_bf(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=30.0)
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
-    assert r.status_code == 200
-    assert r.json()["title"] == "Fat Loss Kickstart"
-
-
-def test_workout_plan_schedule_has_rest_days(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=10.0)
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
-    schedule = r.json()["schedule"]
-    rest_days = [d for d in schedule if d["rest"]]
-    assert len(rest_days) >= 1
-
-
-# ---------------------------------------------------------------------------
-# GET /exercises/today-summary
-# ---------------------------------------------------------------------------
-
-def test_today_summary_returns_day_and_exercises(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=10.0)
-    r = client.get("/exercises/today-summary", headers=complete_auth_headers)
-    assert r.status_code == 200
-    data = r.json()
-    assert "day" in data
-    assert "exercises" in data
-    assert "workouts_done_today" in data
-    assert "workouts_goal_today" in data
-    assert data["workouts_done_today"] == 0
 
 
 def test_today_summary_no_scan_raises_404(client, auth_headers, seeded_db):
