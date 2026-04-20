@@ -7,12 +7,16 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
 
 from config import settings
 from database import SessionLocal, engine, Base
+from limiter import limiter
 # Import all models so Base.metadata knows about them before create_all.
 from models import user_workout_plan  # noqa: F401 — register table
 from routers import users, exercises, user_exercises, scan, water, workout_plans
@@ -99,6 +103,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Gotta Minute Fitness API", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Parse allowed origins from env var (comma-separated)
 origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",")]

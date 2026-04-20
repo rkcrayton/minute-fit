@@ -1,13 +1,14 @@
 import io
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, status
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from PIL import Image as PILImage
 import auth
+from limiter import limiter
 from models.user import User
 from schemas.user import UserCreate, UserResponse, UserUpdate
 from schemas.auth import Token, RefreshRequest
@@ -47,7 +48,8 @@ def _sanitize_avatar(raw: bytes) -> bytes:
     return out.getvalue()
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def register_user(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     try:
         if db.query(User).filter(User.email == user.email).first():
             raise HTTPException(status_code=400, detail="Email already registered")
@@ -81,7 +83,8 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         raise
 
 @router.post("/token", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
     user = db.query(User).filter(User.username == form_data.username).first()
 
@@ -96,7 +99,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @router.post("/token/refresh", response_model=Token)
-def refresh_token(body: RefreshRequest, db: Session = Depends(get_db)):
+@limiter.limit("20/minute")
+def refresh_token(request: Request, body: RefreshRequest, db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

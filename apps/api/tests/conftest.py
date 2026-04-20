@@ -124,3 +124,11 @@ def seeded_db(db):
 
 
 from helpers import make_jpeg_bytes  # noqa: F401 — re-exported for backward compat
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Clear in-memory rate limit counters between tests so limits never accumulate."""
+    from limiter import limiter
+    yield
+    limiter._storage.reset()

@@ -5,12 +5,13 @@ import cv2
 import pillow_heif
 from pathlib import Path
 from PIL import Image as PILImage
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 import auth
 from database import get_db
+from limiter import limiter
 from models.user import User
 from models.scan_result import ScanResult
 
@@ -239,7 +240,9 @@ def _process_analysis_sync(
 
 
 @router.post("/analyze", status_code=status.HTTP_200_OK)
+@limiter.limit("5/minute")
 def analyze_body(
+    request: Request,
     front: UploadFile = File(...),
     side: UploadFile = File(...),
     back: UploadFile = File(...),
@@ -458,7 +461,9 @@ def get_measurement_image(
 
 
 @router.post("/insights/{session_id}")
+@limiter.limit("5/minute")
 def regenerate_insights(
+    request: Request,
     session_id: str,
     current_user: User = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
