@@ -9,6 +9,10 @@ class ExerciseResponse(BaseModel):
     secondary_muscle: Optional[str] = None
     tertiary_muscle: Optional[str] = None
     difficulty: str
+    equipment: Optional[str] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+    image_url: Optional[str] = None
 
     class Config:
         from_attributes = True

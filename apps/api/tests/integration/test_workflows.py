@@ -16,6 +16,7 @@ from models.exercise import Exercise
 from models.scan_result import ScanResult
 from models.user import User
 from models.user_exercise import UserExercise
+from models.user_workout_plan import UserWorkoutPlan
 from models.water_log import WaterLog
 
 
@@ -92,9 +93,8 @@ def test_workout_tracking_flow(client, seeded_db):
     # Log the first exercise
     exercise_id = exercises[0]["id"]
     log_r = client.post("/user-exercises/", json={
-        "user_id": user_id,
         "exercise_id": exercise_id,
-        "rep_count": 30,
+        "duration_seconds": 30,
     }, headers=headers)
     assert log_r.status_code == 201
     logged = log_r.json()
@@ -117,24 +117,20 @@ def test_workout_tracking_flow(client, seeded_db):
 # ---------------------------------------------------------------------------
 
 def test_today_summary_progress_updates(client, seeded_db, db, complete_user, complete_auth_headers):
-    scan = ScanResult(
-        session_id="integration-sess-01",
-        user_id=complete_user.id,
-        bmi=22.5,
-        body_fat_percentage=20.0,
-        fat_mass_kg=15.0,
-        lean_mass_kg=60.0,
-        waist_to_hip_ratio=0.82,
-        health_category="Fit",
-        health_risk_level="low",
-        health_recommendation="Maintain current habits.",
-        measurements={},
-    )
-    db.add(scan)
+    # Create a workout plan with exercises on every day
+    from schemas.workout_plan import DAYS
+    exercises = db.query(Exercise).all()
+    schedule = {}
+    for day in DAYS:
+        schedule[day] = [
+            {"exercise_id": exercises[0].id, "times_per_day": 2, "duration_seconds": 60, "order": 0},
+        ]
+    plan = UserWorkoutPlan(user_id=complete_user.id, title="Test Plan", schedule=schedule)
+    db.add(plan)
     db.commit()
 
     # Fetch today's summary to see what's planned
-    summary_before = client.get("/exercises/today-summary", headers=complete_auth_headers)
+    summary_before = client.get("/workout-plans/me/today-summary", headers=complete_auth_headers)
     assert summary_before.status_code == 200
     data_before = summary_before.json()
     done_before = data_before["workouts_done_today"]
@@ -147,13 +143,12 @@ def test_today_summary_progress_updates(client, seeded_db, db, complete_user, co
     # Log one of today's planned exercises
     today_exercise = data_before["exercises"][0]
     client.post("/user-exercises/", json={
-        "user_id": complete_user.id,
         "exercise_id": today_exercise["exercise_id"],
-        "rep_count": 60,
+        "duration_seconds": 60,
     }, headers=complete_auth_headers)
 
     # Done count should have incremented by exactly 1
-    summary_after = client.get("/exercises/today-summary", headers=complete_auth_headers)
+    summary_after = client.get("/workout-plans/me/today-summary", headers=complete_auth_headers)
     assert summary_after.json()["workouts_done_today"] == done_before + 1
 
 
@@ -200,30 +195,32 @@ def test_water_date_isolation(client):
 # ---------------------------------------------------------------------------
 
 def test_workout_plan_tier_flow(client, seeded_db, db, complete_user, complete_auth_headers):
-    scan = ScanResult(
-        session_id="integration-sess-02",
+    from schemas.workout_plan import DAYS
+
+    # Create a plan that matches the "Fat Loss Kickstart" tier
+    exercises = db.query(Exercise).all()
+    schedule = {}
+    for day in DAYS:
+        schedule[day] = [
+            {"exercise_id": exercises[0].id, "times_per_day": 1, "duration_seconds": 60, "order": 0},
+        ]
+
+    plan = UserWorkoutPlan(
         user_id=complete_user.id,
-        bmi=29.0,
-        body_fat_percentage=30.0,
-        fat_mass_kg=30.0,
-        lean_mass_kg=60.0,
-        waist_to_hip_ratio=0.95,
-        health_category="Obese",
-        health_risk_level="high",
-        health_recommendation="Start with low-impact cardio.",
-        measurements={},
+        title="Fat Loss Kickstart",
+        subtitle="Low-impact cardio plan",
+        schedule=schedule,
     )
-    db.add(scan)
+    db.add(plan)
     db.commit()
 
-    plan_r = client.get("/exercises/plan", headers=complete_auth_headers)
+    plan_r = client.get("/workout-plans/me", headers=complete_auth_headers)
     assert plan_r.status_code == 200
-    plan = plan_r.json()
-    assert plan["title"] == "Fat Loss Kickstart"
-    assert len(plan["schedule"]) == 7
-    for day in plan["schedule"]:
-        assert "day" in day
-        assert "rest" in day
+    plan_data = plan_r.json()
+    assert plan_data["title"] == "Fat Loss Kickstart"
+    assert len(plan_data["schedule"]) == 7
+    for day_name in DAYS:
+        assert day_name in plan_data["schedule"]
 
 
 # ---------------------------------------------------------------------------
@@ -260,9 +257,8 @@ def test_user_data_isolation(client, seeded_db):
     # Alice logs a workout and water
     exercises = client.get("/exercises/").json()
     client.post("/user-exercises/", json={
-        "user_id": user_id_a,
         "exercise_id": exercises[0]["id"],
-        "rep_count": 10,
+        "duration_seconds": 10,
     }, headers=headers_a)
     client.post("/water/logs", json={"amount_oz": 32.0}, headers=headers_a)
 

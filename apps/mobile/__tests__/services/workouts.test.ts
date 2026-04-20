@@ -14,7 +14,7 @@ const mockedApi = api as jest.Mocked<typeof api>;
 // ─── getTodaySummary ──────────────────────────────────────────────────────────
 
 describe('getTodaySummary', () => {
-  it('calls GET /exercises/today-summary with a tz param and returns data', async () => {
+  it('calls GET /workout-plans/me/today-summary with a tz param and returns data', async () => {
     const payload = {
       day: 'monday',
       is_rest_day: false,
@@ -29,7 +29,7 @@ describe('getTodaySummary', () => {
 
     expect(mockedApi.get).toHaveBeenCalledTimes(1);
     const [url, config] = mockedApi.get.mock.calls[0];
-    expect(url).toBe('/exercises/today-summary');
+    expect(url).toBe('/workout-plans/me/today-summary');
     expect(config?.params).toHaveProperty('tz');
     expect(typeof config?.params.tz).toBe('string');
     expect(result).toEqual(payload);

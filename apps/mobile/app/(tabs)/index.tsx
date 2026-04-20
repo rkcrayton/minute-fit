@@ -24,7 +24,7 @@ import {
   getAdaptiveStepGoal,
 } from "@/services/tracking-goals";
 import { createWaterLog, getTodayWaterSummary } from "@/services/water";
-import { getTodaySummary, getRecentWorkouts, type TodaySummary, type RecentWorkout } from "@/services/workouts";
+import { getTodaySummary, getRecentWorkouts, getWorkoutStreak, type TodaySummary, type RecentWorkout } from "@/services/workouts";
 import { ScrollView } from "react-native";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -54,7 +54,7 @@ export default function HomeScreen() {
 
   const userName = user?.first_name ?? user?.username ?? "User";
 
-  const streakDays = 0;
+  const [streakDays, setStreakDays] = useState(0);
 
   const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
   const [recentWorkouts, setRecentWorkouts] = useState<RecentWorkout[]>([]);
@@ -110,12 +110,22 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const loadStreak = useCallback(async () => {
+    try {
+      const streak = await getWorkoutStreak();
+      setStreakDays(streak);
+    } catch (error) {
+      // ignore
+    }
+  }, []);
+
   // Refresh workout progress whenever the home screen gains focus
   useFocusEffect(
     useCallback(() => {
       loadTodaySummary();
       loadRecentWorkouts();
-    }, [loadTodaySummary, loadRecentWorkouts]),
+      loadStreak();
+    }, [loadTodaySummary, loadRecentWorkouts, loadStreak]),
   );
 
   const handleAddWater = useCallback(async (amountOz: number) => {

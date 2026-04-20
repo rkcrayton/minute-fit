@@ -1,5 +1,23 @@
 import pytest
 from models.scan_result import ScanResult
+from models.user_workout_plan import UserWorkoutPlan
+
+
+def _insert_plan(db, user_id, exercises_db, title="Test Plan"):
+    """Create a minimal workout plan with the first exercise on every day."""
+    from schemas.workout_plan import DAYS
+    ex = exercises_db[0] if exercises_db else None
+    schedule = {}
+    for day in DAYS:
+        if ex:
+            schedule[day] = [{"exercise_id": ex.id, "times_per_day": 2, "duration_seconds": 60, "order": 0}]
+        else:
+            schedule[day] = []
+    plan = UserWorkoutPlan(user_id=user_id, title=title, schedule=schedule)
+    db.add(plan)
+    db.commit()
+    db.refresh(plan)
+    return plan
 
 
 # ---------------------------------------------------------------------------
@@ -37,103 +55,94 @@ def test_seed_exercises_idempotent(db):
     assert count == 8
 
 
+def test_seed_exercises_backfills_equipment(db):
+    """When exercises exist without equipment/category, seed backfills them."""
+    from routers.exercises import seed_exercises
+    from models.exercise import Exercise
+
+    seed_exercises(db)
+    # Clear equipment on Push-Ups to simulate pre-migration row
+    pushups = db.query(Exercise).filter(Exercise.name == "Push-Ups").one()
+    pushups.equipment = None
+    pushups.category = None
+    db.commit()
+
+    # Re-seed should backfill
+    seed_exercises(db)
+    db.refresh(pushups)
+    assert pushups.equipment == "bodyweight"
+    assert pushups.category == "strength"
+
+
 # ---------------------------------------------------------------------------
-# GET /exercises/plan
+# GET /exercises/library — filterable search across the expanded catalog
 # ---------------------------------------------------------------------------
 
-def test_workout_plan_unauthenticated(client, seeded_db):
-    r = client.get("/exercises/plan")
+def test_library_search_returns_list(client, seeded_db):
+    r = client.get("/exercises/library?limit=5")
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+
+
+def test_library_search_by_name(client, seeded_db):
+    r = client.get("/exercises/library", params={"q": "push"})
+    assert r.status_code == 200
+    names = {e["name"] for e in r.json()}
+    assert "Push-Ups" in names
+
+
+def test_library_search_by_equipment(client, seeded_db):
+    r = client.get("/exercises/library", params={"equipment": "bodyweight"})
+    assert r.status_code == 200
+    assert len(r.json()) >= 1
+
+
+def test_library_search_no_match(client, seeded_db):
+    r = client.get("/exercises/library", params={"q": "nothing-matches-this-xyz"})
+    assert r.status_code == 200
+    assert r.json() == []
+
+
+# ---------------------------------------------------------------------------
+# POST /admin/sync-exercises — protected by X-Admin-Token
+# ---------------------------------------------------------------------------
+
+def test_admin_sync_requires_token(client, monkeypatch):
+    # With no token configured the endpoint should 503
+    from config import settings
+    monkeypatch.setattr(settings, "ADMIN_API_TOKEN", "")
+    r = client.post("/admin/sync-exercises")
+    assert r.status_code == 503
+
+
+def test_admin_sync_rejects_bad_token(client, monkeypatch):
+    from config import settings
+    monkeypatch.setattr(settings, "ADMIN_API_TOKEN", "right-token")
+    r = client.post("/admin/sync-exercises", headers={"X-Admin-Token": "wrong"})
     assert r.status_code == 401
 
 
-def test_workout_plan_no_scan_raises_404(client, auth_headers, seeded_db):
-    r = client.get("/exercises/plan", headers=auth_headers)
+def test_today_summary_no_plan_raises_404(client, auth_headers, seeded_db):
+    r = client.get("/workout-plans/me/today-summary", headers=auth_headers)
     assert r.status_code == 404
-    assert "scan" in r.json()["detail"].lower()
-
-
-def _insert_scan(db, user_id: int, body_fat: float):
-    scan = ScanResult(
-        session_id=f"sess-{user_id}-{int(body_fat)}",
-        user_id=user_id,
-        bmi=22.0,
-        body_fat_percentage=body_fat,
-        fat_mass_kg=20.0,
-        lean_mass_kg=60.0,
-        waist_to_hip_ratio=0.85,
-        health_category="Fit",
-        health_risk_level="low",
-        health_recommendation="Good",
-        measurements={},
-    )
-    db.add(scan)
-    db.commit()
-
-
-def test_workout_plan_lean_bf(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=10.0)
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
-    assert r.status_code == 200
-    data = r.json()
-    assert data["title"] == "Lean Performance"
-    assert len(data["schedule"]) == 7
-
-
-def test_workout_plan_moderate_bf(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=20.0)
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
-    assert r.status_code == 200
-    assert r.json()["title"] == "Body Recomposition"
-
-
-def test_workout_plan_high_bf(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=30.0)
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
-    assert r.status_code == 200
-    assert r.json()["title"] == "Fat Loss Kickstart"
-
-
-def test_workout_plan_schedule_has_rest_days(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=10.0)
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
-    schedule = r.json()["schedule"]
-    rest_days = [d for d in schedule if d["rest"]]
-    assert len(rest_days) >= 1
-
-
-# ---------------------------------------------------------------------------
-# GET /exercises/today-summary
-# ---------------------------------------------------------------------------
-
-def test_today_summary_returns_day_and_exercises(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=10.0)
-    r = client.get("/exercises/today-summary", headers=complete_auth_headers)
-    assert r.status_code == 200
-    data = r.json()
-    assert "day" in data
-    assert "exercises" in data
-    assert "workouts_done_today" in data
-    assert "workouts_goal_today" in data
-    assert data["workouts_done_today"] == 0
-
-
-def test_today_summary_no_scan_raises_404(client, auth_headers, seeded_db):
-    r = client.get("/exercises/today-summary", headers=auth_headers)
-    assert r.status_code == 404
-    assert "scan" in r.json()["detail"].lower()
+    assert "plan" in r.json()["detail"].lower()
 
 
 def test_workout_plan_invalid_timezone(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=10.0)
-    r = client.get("/exercises/plan?tz=Not/A_Timezone", headers=complete_auth_headers)
+    from models.exercise import Exercise
+    exercises = db.query(Exercise).all()
+    _insert_plan(db, complete_user.id, exercises)
+    r = client.get("/workout-plans/me?tz=Not/A_Timezone", headers=complete_auth_headers)
     # Falls back to UTC silently — still returns a valid plan
     assert r.status_code == 200
     assert "schedule" in r.json()
 
 
 def test_today_summary_invalid_timezone(client, complete_auth_headers, seeded_db, db, complete_user):
-    _insert_scan(db, complete_user.id, body_fat=10.0)
-    r = client.get("/exercises/today-summary?tz=Not/A_Timezone", headers=complete_auth_headers)
+    from models.exercise import Exercise
+    exercises = db.query(Exercise).all()
+    _insert_plan(db, complete_user.id, exercises)
+    r = client.get("/workout-plans/me/today-summary?tz=Not/A_Timezone", headers=complete_auth_headers)
     assert r.status_code == 200
     assert "day" in r.json()
 
@@ -143,10 +152,11 @@ def test_workout_plan_counts_todays_completions(client, complete_auth_headers, s
     from models.user_exercise import UserExercise
     from datetime import datetime, timezone
 
-    _insert_scan(db, complete_user.id, body_fat=10.0)
+    exercises = db.query(Exercise).all()
+    _insert_plan(db, complete_user.id, exercises)
 
-    # Log an exercise today so the completions loop in /plan runs
-    exercise = db.query(Exercise).first()
+    # Log an exercise today so the completions loop in today-summary runs
+    exercise = exercises[0]
     db.add(UserExercise(
         user_id=complete_user.id,
         exercise_id=exercise.id,
@@ -155,5 +165,5 @@ def test_workout_plan_counts_todays_completions(client, complete_auth_headers, s
     ))
     db.commit()
 
-    r = client.get("/exercises/plan", headers=complete_auth_headers)
+    r = client.get("/workout-plans/me/today-summary", headers=complete_auth_headers)
     assert r.status_code == 200
