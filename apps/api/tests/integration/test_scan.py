@@ -35,7 +35,7 @@ def _jpeg_upload(filename="photo.jpg"):
     return (filename, io.BytesIO(make_jpeg_bytes()), "image/jpeg")
 
 
-def _insert_scan(db, user_id: int, session_id: str = "test-session-123"):
+def _insert_scan(db, user_id: int, session_id: str = "00000000-0000-4000-a000-000000000001"):
     from models.scan_result import ScanResult
     scan = ScanResult(
         session_id=session_id,
@@ -160,29 +160,37 @@ def test_analyze_generic_exception(client, complete_auth_headers, mocker):
 # ---------------------------------------------------------------------------
 
 def test_get_results_unauthenticated(client):
-    r = client.get("/scan/results/some-session")
+    r = client.get("/scan/results/00000000-0000-4000-a000-000000000099")
     assert r.status_code == 401
 
 
 def test_get_results_not_found(client, auth_headers):
-    r = client.get("/scan/results/nonexistent-session", headers=auth_headers)
+    r = client.get("/scan/results/00000000-0000-4000-a000-000000000099", headers=auth_headers)
     assert r.status_code == 404
 
 
+def test_get_results_invalid_session_id(client, auth_headers):
+    r = client.get("/scan/results/not-a-valid-uuid", headers=auth_headers)
+    assert r.status_code == 400
+    assert "session" in r.json()["detail"].lower()
+
+
 def test_get_results_success(client, auth_headers, db, test_user):
-    _insert_scan(db, test_user.id, "sess-abc")
-    r = client.get("/scan/results/sess-abc", headers=auth_headers)
+    sid = "10000000-0000-4000-a000-000000000001"
+    _insert_scan(db, test_user.id, sid)
+    r = client.get(f"/scan/results/{sid}", headers=auth_headers)
     assert r.status_code == 200
     data = r.json()
-    assert data["session_id"] == "sess-abc"
+    assert data["session_id"] == sid
     assert "body_composition" in data
     assert "health_assessment" in data
     assert "measurements" in data
 
 
 def test_get_results_cannot_access_other_users_scan(client, auth_headers, db, complete_user):
-    _insert_scan(db, complete_user.id, "sess-other")
-    r = client.get("/scan/results/sess-other", headers=auth_headers)
+    sid = "20000000-0000-4000-a000-000000000002"
+    _insert_scan(db, complete_user.id, sid)
+    r = client.get(f"/scan/results/{sid}", headers=auth_headers)
     assert r.status_code == 404
 
 
@@ -191,30 +199,33 @@ def test_get_results_cannot_access_other_users_scan(client, auth_headers, db, co
 # ---------------------------------------------------------------------------
 
 def test_get_image_invalid_view(client, auth_headers, db, test_user):
-    _insert_scan(db, test_user.id, "sess-img")
-    r = client.get("/scan/images/sess-img/diagonal", headers=auth_headers)
+    sid = "30000000-0000-4000-a000-000000000003"
+    _insert_scan(db, test_user.id, sid)
+    r = client.get(f"/scan/images/{sid}/diagonal", headers=auth_headers)
     assert r.status_code == 400
     assert "front" in r.json()["detail"].lower() or "view" in r.json()["detail"].lower()
 
 
 def test_get_image_scan_not_found(client, auth_headers):
-    r = client.get("/scan/images/no-such-session/front", headers=auth_headers)
+    r = client.get("/scan/images/00000000-0000-4000-a000-ffffffffffff/front", headers=auth_headers)
     assert r.status_code == 404
 
 
 def test_get_image_file_not_on_disk(client, auth_headers, db, test_user):
-    _insert_scan(db, test_user.id, "sess-nofile")
-    r = client.get("/scan/images/sess-nofile/front", headers=auth_headers)
+    sid = "40000000-0000-4000-a000-000000000004"
+    _insert_scan(db, test_user.id, sid)
+    r = client.get(f"/scan/images/{sid}/front", headers=auth_headers)
     assert r.status_code == 404
 
 
 def test_get_image_file_exists(client, auth_headers, db, test_user, mocker, tmp_path):
-    _insert_scan(db, test_user.id, "sess-exists")
-    fake_img = tmp_path / "sess-exists_front.jpg"
+    sid = "50000000-0000-4000-a000-000000000005"
+    _insert_scan(db, test_user.id, sid)
+    fake_img = tmp_path / f"{sid}_front.jpg"
     fake_img.write_bytes(make_jpeg_bytes())
 
     mocker.patch.object(scan_module, "PROCESSED_DIR", tmp_path)
-    r = client.get("/scan/images/sess-exists/front", headers=auth_headers)
+    r = client.get(f"/scan/images/{sid}/front", headers=auth_headers)
     assert r.status_code == 200
 
 
@@ -223,14 +234,16 @@ def test_get_image_file_exists(client, auth_headers, db, test_user, mocker, tmp_
 # ---------------------------------------------------------------------------
 
 def test_measurement_image_invalid_view(client, auth_headers, db, test_user):
-    _insert_scan(db, test_user.id, "sess-meas")
-    r = client.get("/scan/measurement-images/sess-meas/top", headers=auth_headers)
+    sid = "60000000-0000-4000-a000-000000000006"
+    _insert_scan(db, test_user.id, sid)
+    r = client.get(f"/scan/measurement-images/{sid}/top", headers=auth_headers)
     assert r.status_code == 400
 
 
 def test_measurement_image_not_found(client, auth_headers, db, test_user):
-    _insert_scan(db, test_user.id, "sess-measnf")
-    r = client.get("/scan/measurement-images/sess-measnf/front", headers=auth_headers)
+    sid = "70000000-0000-4000-a000-000000000007"
+    _insert_scan(db, test_user.id, sid)
+    r = client.get(f"/scan/measurement-images/{sid}/front", headers=auth_headers)
     assert r.status_code == 404
 
 

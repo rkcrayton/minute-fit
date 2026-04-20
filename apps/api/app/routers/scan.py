@@ -1,4 +1,5 @@
 import io
+import re
 import uuid
 import cv2
 import pillow_heif
@@ -14,6 +15,15 @@ from models.user import User
 from models.scan_result import ScanResult
 
 router = APIRouter(prefix="/scan", tags=["scan"])
+
+# Regex to validate session_id format (UUID v4 only — prevents path traversal)
+_UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
+
+
+def _validate_session_id(session_id: str) -> None:
+    """Reject session IDs that aren't valid UUIDs to prevent path traversal."""
+    if not _UUID_RE.match(session_id):
+        raise HTTPException(status_code=400, detail="Invalid session ID format")
 
 # Image sanitization 
 pillow_heif.register_heif_opener()  # enables PIL to open HEIC/HEIF files
@@ -365,6 +375,7 @@ def get_scan_results(
     db: Session = Depends(get_db),
 ):
     """Retrieve a stored scan result by session ID."""
+    _validate_session_id(session_id)
     scan = db.query(ScanResult).filter(
         ScanResult.session_id == session_id,
         ScanResult.user_id == current_user.id,
@@ -401,6 +412,7 @@ def get_processed_image(
     db: Session = Depends(get_db),
 ):
     """Serve the preprocessed image for a given view (front, side, back)."""
+    _validate_session_id(session_id)
     if view not in ('front', 'side', 'back'):
         raise HTTPException(status_code=400, detail="View must be front, side, or back")
 
@@ -427,6 +439,7 @@ def get_measurement_image(
     db: Session = Depends(get_db),
 ):
     """Serve the annotated measurement visualization for a given view."""
+    _validate_session_id(session_id)
     if view not in ('front', 'side', 'back'):
         raise HTTPException(status_code=400, detail="View must be front, side, or back")
 
@@ -451,6 +464,7 @@ def regenerate_insights(
     db: Session = Depends(get_db),
 ):
     """Regenerate AI insights for an existing scan result."""
+    _validate_session_id(session_id)
     scan = db.query(ScanResult).filter(
         ScanResult.session_id == session_id,
         ScanResult.user_id == current_user.id,
