@@ -138,7 +138,7 @@ def test_analyze_value_error_from_processing(client, complete_auth_headers, mock
         "back":  _jpeg_upload("back.jpg"),
     })
     assert r.status_code == 422
-    assert "bad pose" in r.json()["detail"]
+    assert "Photo processing failed" in r.json()["detail"]
 
 
 def test_analyze_generic_exception(client, complete_auth_headers, mocker):

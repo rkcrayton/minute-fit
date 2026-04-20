@@ -12,5 +12,9 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class LogoutRequest(BaseModel):
+    refresh_token: str
+
+
 class TokenData(BaseModel):
     username: Optional[str] = None

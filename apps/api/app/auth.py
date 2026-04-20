@@ -38,11 +38,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-def create_refresh_token(data: dict):
+def create_refresh_token(data: dict) -> tuple[str, str, datetime]:
+    """Returns (encoded_token, jti, expires_at). Callers must persist the jti."""
+    jti = str(uuid.uuid4())
+    expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire, "type": "refresh", "jti": str(uuid.uuid4())})
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    to_encode.update({"exp": expires_at, "type": "refresh", "jti": jti})
+    token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    return token, jti, expires_at
 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):

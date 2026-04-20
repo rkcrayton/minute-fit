@@ -132,10 +132,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function logout() {
-    await SecureStore.deleteItemAsync("token");
-    await SecureStore.deleteItemAsync("refresh_token");
-    setToken(null);
-    setUser(null);
+    try {
+      const refreshToken = await SecureStore.getItemAsync("refresh_token");
+      if (refreshToken) {
+        await api.post("/users/logout", { refresh_token: refreshToken });
+      }
+    } catch {
+      // Best-effort — always clear local state even if the server call fails
+    } finally {
+      await SecureStore.deleteItemAsync("token");
+      await SecureStore.deleteItemAsync("refresh_token");
+      setToken(null);
+      setUser(null);
+    }
   }
 
   return (

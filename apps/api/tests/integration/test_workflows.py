@@ -116,29 +116,34 @@ def test_workout_tracking_flow(client, seeded_db):
 # 3. Today summary updates as exercises are logged
 # ---------------------------------------------------------------------------
 
-def test_today_summary_progress_updates(client, seeded_db, db, complete_user, complete_auth_headers):
-    # Create a workout plan with exercises on every day
+def test_today_summary_progress_updates(client, seeded_db, db, complete_user, complete_auth_headers, monkeypatch):
+    import datetime as _dt
+    import routers.workout_plans as wp_module
     from schemas.workout_plan import DAYS
+
+    # Pin "today" to a known Monday so the test is fully deterministic.
+    class _FixedMonday(_dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return _dt.datetime(2024, 1, 1, 12, 0, 0, tzinfo=tz or _dt.timezone.utc)
+
+    monkeypatch.setattr(wp_module, "datetime", _FixedMonday)
+
+    # Build the plan via the API so JSON serialization is consistent.
     exercises = db.query(Exercise).all()
     schedule = {}
     for day in DAYS:
         schedule[day] = [
             {"exercise_id": exercises[0].id, "times_per_day": 2, "duration_seconds": 60, "order": 0},
         ]
-    plan = UserWorkoutPlan(user_id=complete_user.id, title="Test Plan", schedule=schedule)
-    db.add(plan)
-    db.commit()
+    client.put("/workout-plans/me", json={"schedule": schedule}, headers=complete_auth_headers)
 
-    # Fetch today's summary to see what's planned
+    # Fetch today's summary
     summary_before = client.get("/workout-plans/me/today-summary", headers=complete_auth_headers)
     assert summary_before.status_code == 200
     data_before = summary_before.json()
+    assert not data_before["is_rest_day"], "Expected a non-rest day — all days have exercises"
     done_before = data_before["workouts_done_today"]
-
-    if data_before["is_rest_day"]:
-        # Rest days have no planned exercises; the counter will stay 0
-        # regardless of what we log — just verify the endpoint is stable.
-        return
 
     # Log one of today's planned exercises
     today_exercise = data_before["exercises"][0]
@@ -147,7 +152,7 @@ def test_today_summary_progress_updates(client, seeded_db, db, complete_user, co
         "duration_seconds": 60,
     }, headers=complete_auth_headers)
 
-    # Done count should have incremented by exactly 1
+    # Done count must increment by exactly 1
     summary_after = client.get("/workout-plans/me/today-summary", headers=complete_auth_headers)
     assert summary_after.json()["workouts_done_today"] == done_before + 1
 

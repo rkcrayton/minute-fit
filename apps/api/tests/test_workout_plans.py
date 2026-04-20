@@ -104,26 +104,37 @@ def test_today_summary_requires_plan(client, complete_auth_headers, seeded_db):
     assert r.status_code == 404
 
 
-def test_today_summary_after_plan(client, complete_auth_headers, seeded_db, db):
+def test_today_summary_after_plan(client, complete_auth_headers, seeded_db, db, monkeypatch):
+    import datetime as _dt
+    import routers.workout_plans as wp_module
     from models.exercise import Exercise
+
+    # Pin "today" to a known Monday so the test is deterministic regardless of
+    # when it runs. 2024-01-01 is a verified Monday.
+    class _FixedMonday(_dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return _dt.datetime(2024, 1, 1, 12, 0, 0, tzinfo=tz or _dt.timezone.utc)
+
+    monkeypatch.setattr(wp_module, "datetime", _FixedMonday)
+
     ex = db.query(Exercise).first()
-    schedule = {d: [] for d in [
-        "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
-    ]}
-    # Fill today with one exercise so we can see a non-empty summary. Because
-    # today is unknown inside the test harness, just put the entry on every day.
-    for d in schedule:
-        schedule[d] = [
-            {"exercise_id": ex.id, "times_per_day": 2, "duration_seconds": 60, "order": 0}
-        ]
+    schedule = {d: [] for d in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]}
+    # Only put the exercise on monday — if the router returns the wrong day the
+    # goal count will be 0, exposing the bug.
+    schedule["monday"] = [{"exercise_id": ex.id, "times_per_day": 2, "duration_seconds": 60, "order": 0}]
     client.put("/workout-plans/me", json={"schedule": schedule}, headers=complete_auth_headers)
 
     r = client.get("/workout-plans/me/today-summary", headers=complete_auth_headers)
     assert r.status_code == 200
     data = r.json()
-    for key in ("day", "is_rest_day", "exercises", "next_exercise", "workouts_done_today", "workouts_goal_today"):
-        assert key in data
+    assert data["day"] == "monday"
+    assert not data["is_rest_day"]
+    assert len(data["exercises"]) == 1
+    assert data["exercises"][0]["name"] == ex.name
     assert data["workouts_goal_today"] == 2
+    assert data["workouts_done_today"] == 0
+    assert data["next_exercise"]["exercise_id"] == ex.id
 
 
 # ---------------------------------------------------------------------------

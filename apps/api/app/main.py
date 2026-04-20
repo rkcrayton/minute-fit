@@ -19,6 +19,7 @@ from database import SessionLocal, engine, Base
 from limiter import limiter
 # Import all models so Base.metadata knows about them before create_all.
 from models import user_workout_plan  # noqa: F401 — register table
+from models import refresh_token  # noqa: F401 — register table
 from routers import users, exercises, user_exercises, scan, water, workout_plans
 
 _log = logging.getLogger(__name__)
@@ -139,5 +140,6 @@ def health_check():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return {"status": "healthy"}
-    except Exception as e:
-        return {"status": "unhealthy", "detail": str(e)}
+    except Exception:
+        _log.exception("Health check DB probe failed")
+        return {"status": "unhealthy"}

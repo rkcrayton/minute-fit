@@ -59,21 +59,24 @@ def test_create_access_token_custom_expiry():
 # Refresh token creation
 # ---------------------------------------------------------------------------
 
-def test_create_refresh_token_returns_string():
-    token = auth.create_refresh_token({"sub": "alice"})
-    assert isinstance(token, str)
-    assert len(token) > 10
+def test_create_refresh_token_returns_tuple():
+    token, jti, expires_at = auth.create_refresh_token({"sub": "alice"})
+    assert isinstance(token, str) and len(token) > 10
+    assert isinstance(jti, str) and len(jti) == 36  # UUID
+    from datetime import datetime
+    assert isinstance(expires_at, datetime)
 
 
 def test_create_refresh_token_has_refresh_type():
-    token = auth.create_refresh_token({"sub": "alice"})
+    token, jti, _ = auth.create_refresh_token({"sub": "alice"})
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
     assert payload["type"] == "refresh"
     assert payload["sub"] == "alice"
+    assert payload["jti"] == jti
     assert "exp" in payload
 
 
 def test_access_and_refresh_tokens_are_different():
     access = auth.create_access_token({"sub": "alice"})
-    refresh = auth.create_refresh_token({"sub": "alice"})
+    refresh, _, _ = auth.create_refresh_token({"sub": "alice"})
     assert access != refresh

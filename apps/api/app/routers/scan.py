@@ -12,6 +12,9 @@ from sqlalchemy.orm import Session
 import auth
 from database import get_db
 from limiter import limiter
+
+import logging
+_log = logging.getLogger(__name__)
 from models.user import User
 from models.scan_result import ScanResult
 
@@ -329,9 +332,11 @@ def analyze_body(
             gender=gender,
         )
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        _log.warning("Scan analysis rejected (session=%s): %s", session_id, e)
+        raise HTTPException(status_code=422, detail="Photo processing failed. Check image quality and try again.")
+    except Exception:
+        _log.exception("Scan analysis internal error (session=%s)", session_id)
+        raise HTTPException(status_code=500, detail="Analysis failed. Please try again.")
 
     # Generate AI insights via Vertex AI Gemini
     from services.llm import generate_scan_insights

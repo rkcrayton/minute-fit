@@ -160,15 +160,15 @@ def test_refresh_token_rejects_access_token(client, test_user):
 
 
 def test_refresh_token_missing_sub(client):
-    # Refresh token with no "sub" claim
-    token = auth_module.create_refresh_token({"data": "no-sub"})
+    # Refresh token with no "sub" claim — rejected before DB lookup
+    token, _, _ = auth_module.create_refresh_token({"data": "no-sub"})
     r = client.post("/users/token/refresh", json={"refresh_token": token})
     assert r.status_code == 401
 
 
 def test_refresh_token_user_not_found(client):
-    # Valid refresh token but username doesn't exist in the DB
-    token = auth_module.create_refresh_token({"sub": "ghost_user_xyz"})
+    # Valid JWT but JTI was never stored — rejected at DB lookup
+    token, _, _ = auth_module.create_refresh_token({"sub": "ghost_user_xyz"})
     r = client.post("/users/token/refresh", json={"refresh_token": token})
     assert r.status_code == 401
 
@@ -214,7 +214,10 @@ def test_upload_avatar_success(client, auth_headers, mocker, tmp_path):
         "file": ("avatar.jpg", io.BytesIO(make_jpeg_bytes()), "image/jpeg"),
     })
     assert r.status_code == 200
-    assert r.json()["profile_picture"] is not None
+    filename = r.json()["profile_picture"]
+    assert filename is not None
+    # Verify the sanitized JPEG was actually written to disk.
+    assert (tmp_path / filename).exists()
 
 
 # ---------------------------------------------------------------------------

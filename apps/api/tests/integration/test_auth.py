@@ -65,7 +65,7 @@ def test_get_current_user_rejects_refresh_token(db):
     db.add(user)
     db.commit()
 
-    refresh_token = auth.create_refresh_token({"sub": "rtuser"})
+    refresh_token, _, _ = auth.create_refresh_token({"sub": "rtuser"})
     with pytest.raises(HTTPException) as exc:
         auth.get_current_user(token=refresh_token, db=db)
     assert exc.value.status_code == 401

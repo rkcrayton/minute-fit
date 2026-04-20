@@ -5,15 +5,21 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import datetime, timedelta
 from PIL import Image as PILImage
+import logging
+from datetime import timezone
+
 import auth
 from limiter import limiter
 from models.user import User
+from models.refresh_token import RefreshToken
 from schemas.user import UserCreate, UserResponse, UserUpdate
-from schemas.auth import Token, RefreshRequest
+from schemas.auth import Token, RefreshRequest, LogoutRequest
 from jose import JWTError, jwt
 from database import get_db
+
+_log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -91,10 +97,12 @@ def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
-    refresh_token = auth.create_refresh_token(data={"sub": user.username})
+    refresh_token, jti, expires_at = auth.create_refresh_token(data={"sub": user.username})
+
+    db.add(RefreshToken(jti=jti, user_id=user.id, expires_at=expires_at))
+    db.commit()
 
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
@@ -111,21 +119,55 @@ def refresh_token(request: Request, body: RefreshRequest, db: Session = Depends(
         if payload.get("type") != "refresh":
             raise credentials_exception
         username: str = payload.get("sub")
-        if username is None:
+        jti: str = payload.get("jti")
+        if username is None or jti is None:
             raise credentials_exception
     except JWTError:
+        raise credentials_exception
+
+    # Verify the token is in the store and has not been revoked (one-time use)
+    stored = db.query(RefreshToken).filter(RefreshToken.jti == jti).first()
+    if stored is None or stored.revoked_at is not None:
+        _log.warning("Refresh attempt with missing or revoked jti=%s", jti)
         raise credentials_exception
 
     user = db.query(User).filter(User.username == username).first()
     if user is None:
         raise credentials_exception
 
+    # Revoke the consumed token before issuing the replacement
+    stored.revoked_at = datetime.utcnow()
+
     access_token = auth.create_access_token(
         data={"sub": user.username},
         expires_delta=timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    new_refresh_token = auth.create_refresh_token(data={"sub": user.username})
+    new_refresh_token, new_jti, new_expires_at = auth.create_refresh_token(data={"sub": user.username})
+
+    db.add(RefreshToken(jti=new_jti, user_id=user.id, expires_at=new_expires_at))
+    db.commit()
+
     return {"access_token": access_token, "refresh_token": new_refresh_token, "token_type": "bearer"}
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(body: LogoutRequest, db: Session = Depends(get_db)):
+    """Revoke the supplied refresh token so it can never be used again."""
+    try:
+        payload = jwt.decode(body.refresh_token, auth.settings.SECRET_KEY, algorithms=[auth.ALGORITHM])
+        jti: str = payload.get("jti")
+    except JWTError:
+        # Expired or invalid token — nothing to revoke, treat as success
+        return
+
+    if jti:
+        stored = db.query(RefreshToken).filter(
+            RefreshToken.jti == jti,
+            RefreshToken.revoked_at.is_(None),
+        ).first()
+        if stored:
+            stored.revoked_at = datetime.utcnow()
+            db.commit()
 
 
 @router.get("/me", response_model=UserResponse)
