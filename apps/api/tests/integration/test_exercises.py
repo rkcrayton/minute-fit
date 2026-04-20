@@ -55,6 +55,25 @@ def test_seed_exercises_idempotent(db):
     assert count == 8
 
 
+def test_seed_exercises_backfills_equipment(db):
+    """When exercises exist without equipment/category, seed backfills them."""
+    from routers.exercises import seed_exercises
+    from models.exercise import Exercise
+
+    seed_exercises(db)
+    # Clear equipment on Push-Ups to simulate pre-migration row
+    pushups = db.query(Exercise).filter(Exercise.name == "Push-Ups").one()
+    pushups.equipment = None
+    pushups.category = None
+    db.commit()
+
+    # Re-seed should backfill
+    seed_exercises(db)
+    db.refresh(pushups)
+    assert pushups.equipment == "bodyweight"
+    assert pushups.category == "strength"
+
+
 # ---------------------------------------------------------------------------
 # GET /exercises/library — filterable search across the expanded catalog
 # ---------------------------------------------------------------------------
