@@ -1,5 +1,11 @@
 import logging
+import os
 from contextlib import asynccontextmanager
+
+logging.basicConfig(
+    level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,9 +40,14 @@ def _add_column_if_missing(conn, table: str, column: str, ddl_type: str) -> None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _log.info("Lifespan startup BEGIN")
+    _log.info(f"DB dialect: {engine.dialect.name}")
     # Create tables if they don't exist (including user_workout_plans).
-    Base.metadata.create_all(bind=engine)
-    _log.info("Base.metadata.create_all finished (user_workout_plans ensured).")
+    try:
+        Base.metadata.create_all(bind=engine)
+        _log.info("Base.metadata.create_all finished (user_workout_plans ensured).")
+    except Exception:
+        _log.exception("create_all FAILED — cannot reach database")
 
     # Lightweight column guards for databases that were created before
     # migrations 001/003 ran. Keeps boot idempotent.
@@ -71,9 +82,17 @@ async def lifespan(app: FastAPI):
             conn.commit()
 
     # Seed exercise data (already idempotent)
+    _log.info("Starting exercise seed...")
     db = SessionLocal()
     try:
+        from models.exercise import Exercise
+        before = db.query(Exercise).count()
+        _log.info(f"Exercises before seed: {before}")
         exercises.seed_exercises(db)
+        after = db.query(Exercise).count()
+        _log.info(f"Exercises after seed: {after}")
+    except Exception:
+        _log.exception("Exercise seeding FAILED")
     finally:
         db.close()
     yield
