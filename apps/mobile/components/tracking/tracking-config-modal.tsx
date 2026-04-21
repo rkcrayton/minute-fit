@@ -3,7 +3,7 @@ import { ALL_STATS, MAX_SELECTED_STATS, type StatId } from "@/constants/tracking
 import { useTrackingPreferences } from "@/contexts/tracking-preferences";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import React, { useEffect, useState } from "react";
-import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
+import { AccessibilityInfo, Dimensions, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -39,6 +39,9 @@ export default function TrackingConfigModal({ visible, onClose }: TrackingConfig
 
   const handleSave = () => {
     save(draftIds);
+    AccessibilityInfo.announceForAccessibility(
+      `Saved. Tracking ${draftIds.length} stat${draftIds.length !== 1 ? "s" : ""}.`
+    );
     onClose();
   };
 
@@ -48,6 +51,7 @@ export default function TrackingConfigModal({ visible, onClose }: TrackingConfig
       transparent
       animationType="slide"
       onRequestClose={onClose}
+      accessibilityViewIsModal
     >
       <View style={styles.overlay}>
         {/* Backdrop — tap to close */}
@@ -120,6 +124,9 @@ export default function TrackingConfigModal({ visible, onClose }: TrackingConfig
                       disabled={disabled}
                       trackColor={{ false: borderColor, true: tint }}
                       thumbColor="#FFFFFF"
+                      accessibilityLabel={`${stat.title}: ${stat.description}`}
+                      accessibilityRole="switch"
+                      accessibilityState={{ checked: selected, disabled }}
                     />
                   </View>
                 );
@@ -129,10 +136,20 @@ export default function TrackingConfigModal({ visible, onClose }: TrackingConfig
 
           {/* Footer actions */}
           <View style={styles.footer}>
-            <Pressable onPress={handleSave} style={styles.saveBtn}>
+            <Pressable
+              onPress={handleSave}
+              style={styles.saveBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Save tracking changes"
+            >
               <ThemedText style={styles.saveBtnText}>Save Changes</ThemedText>
             </Pressable>
-            <Pressable style={styles.cancelBtn} onPress={onClose}>
+            <Pressable
+              style={styles.cancelBtn}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+            >
               <ThemedText style={[styles.cancelText, { opacity: 0.6 }]}>Cancel</ThemedText>
             </Pressable>
           </View>

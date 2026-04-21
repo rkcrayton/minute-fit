@@ -63,6 +63,8 @@ export default function Login() {
           autoCorrect={false}
           value={username}
           onChangeText={setUsername}
+          accessibilityLabel="Username"
+          accessibilityHint="Enter your username"
         />
         <TextInput
           style={[styles.input, { backgroundColor: inputBg, color: text }]}
@@ -71,11 +73,16 @@ export default function Login() {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+          accessibilityLabel="Password"
+          accessibilityHint="Enter your password"
         />
         <Pressable
           style={[styles.primaryBtn, { backgroundColor: "#3B82F6" }]}
           onPress={handleLogin}
           disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel={loading ? "Logging in" : "Log In"}
+          accessibilityState={{ disabled: loading }}
         >
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
@@ -86,7 +93,11 @@ export default function Login() {
       </View>
 
       <View style={styles.bottom}>
-        <Pressable onPress={() => router.replace("/(onboarding)/register" as any)}>
+        <Pressable
+          onPress={() => router.replace("/(onboarding)/register" as any)}
+          accessibilityRole="link"
+          accessibilityLabel="Don't have an account? Sign Up"
+        >
           <Text style={[styles.linkText, { color: subtext }]}>
             Don't have an account?{" "}
             <Text style={{ color: "#3B82F6", fontWeight: "700" }}>Sign Up</Text>

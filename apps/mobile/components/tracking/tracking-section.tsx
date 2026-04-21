@@ -53,7 +53,12 @@ export default function TrackingSection({
           {title}
         </ThemedText>
         {onConfigure && (
-          <Pressable onPress={onConfigure} style={{ padding: 4 }}>
+          <Pressable
+            onPress={onConfigure}
+            style={{ padding: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel="Configure daily tracking stats"
+          >
             <SlidersHorizontal size={16} color={iconColor} />
           </Pressable>
         )}

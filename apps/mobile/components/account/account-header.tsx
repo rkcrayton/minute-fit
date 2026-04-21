@@ -63,7 +63,12 @@ export function AccountHeader({ userName, userImage, logoImage, onAvatarPress }:
       >
         {/* Profile Image */}
         {onAvatarPress ? (
-          <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={onAvatarPress}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Change profile photo"
+          >
             {avatarContent}
           </TouchableOpacity>
         ) : (

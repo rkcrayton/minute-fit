@@ -13,6 +13,7 @@ export type ProgressRingProps = {
   label: string;
   unit?: string;
   showTrack?: boolean;
+  accessibilityLabel?: string;
 };
 
 export function ProgressRing({
@@ -23,6 +24,7 @@ export function ProgressRing({
   label,
   unit = "",
   showTrack = false,
+  accessibilityLabel,
 }: ProgressRingProps) {
   const progressColor = useThemeColor({}, "tint");
   const trackColor = useThemeColor({}, "border");
@@ -32,8 +34,14 @@ export function ProgressRing({
   const progress = Math.min(value / maxValue, 1);
   const strokeDashoffset = circumference - progress * circumference;
 
+  const a11yLabel = accessibilityLabel ?? `${label}: ${value}${unit ? " " + unit : ""}${maxValue !== undefined ? " of " + maxValue : ""}`;
+
   return (
-    <ThemedView style={[tw`items-center`, { backgroundColor: 'transparent' }]}>
+    <ThemedView
+      style={[tw`items-center`, { backgroundColor: 'transparent' }]}
+      accessible={true}
+      accessibilityLabel={a11yLabel}
+    >
       <View
         style={[
           tw`relative justify-center items-center`,

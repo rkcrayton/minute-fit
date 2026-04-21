@@ -96,6 +96,9 @@ export function NextWorkoutCard({
           ]}
           onPress={onStart}
           activeOpacity={0.9}
+          accessibilityRole="button"
+          accessibilityLabel={`Start ${title}`}
+          accessibilityHint="Begins this workout"
         >
           <ThemedText
             type="defaultSemiBold"

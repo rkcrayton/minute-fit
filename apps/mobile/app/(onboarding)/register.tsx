@@ -70,6 +70,8 @@ export default function Register() {
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
+          accessibilityLabel="Email"
+          accessibilityHint="Enter your email address"
         />
         <TextInput
           style={[styles.input, { backgroundColor: inputBg, color: text }]}
@@ -79,6 +81,8 @@ export default function Register() {
           autoCorrect={false}
           value={username}
           onChangeText={setUsername}
+          accessibilityLabel="Username"
+          accessibilityHint="Choose a username"
         />
         <TextInput
           style={[styles.input, { backgroundColor: inputBg, color: text }]}
@@ -87,6 +91,8 @@ export default function Register() {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+          accessibilityLabel="Password"
+          accessibilityHint="Choose a password"
         />
         <TextInput
           style={[styles.input, { backgroundColor: inputBg, color: text }]}
@@ -95,11 +101,16 @@ export default function Register() {
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
+          accessibilityLabel="Confirm Password"
+          accessibilityHint="Re-enter your password to confirm"
         />
         <Pressable
           style={[styles.primaryBtn, { backgroundColor: "#3B82F6" }]}
           onPress={handleRegister}
           disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel={loading ? "Creating account" : "Sign Up"}
+          accessibilityState={{ disabled: loading }}
         >
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
@@ -110,7 +121,11 @@ export default function Register() {
       </View>
 
       <View style={styles.bottom}>
-        <Pressable onPress={() => router.replace("/(onboarding)/login" as any)}>
+        <Pressable
+          onPress={() => router.replace("/(onboarding)/login" as any)}
+          accessibilityRole="link"
+          accessibilityLabel="Already have an account? Log In"
+        >
           <Text style={[styles.linkText, { color: subtext }]}>
             Already have an account?{" "}
             <Text style={{ color: "#3B82F6", fontWeight: "700" }}>Log In</Text>

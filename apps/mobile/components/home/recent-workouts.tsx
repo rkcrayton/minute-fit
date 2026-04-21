@@ -41,6 +41,8 @@ export function RecentWorkouts({ workouts }: RecentWorkoutsProps) {
             <View
               key={index}
               style={tw`flex-row items-center gap-3`}
+              accessible
+              accessibilityLabel={`${workout.name}${workout.category ? `, ${workout.category}` : ""}, ${workout.duration}`}
             >
               <CheckCircle2 size={18} color={iconColor} />
               <View style={tw`flex-1`}>

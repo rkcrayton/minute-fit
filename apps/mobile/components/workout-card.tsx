@@ -54,6 +54,8 @@ export function WorkoutCard({
           { backgroundColor: buttonBgColor },
         ]}
         onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Do workout: ${title}`}
       >
         <ThemedText
           type="defaultSemiBold"

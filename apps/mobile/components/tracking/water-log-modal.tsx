@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import React from "react";
-import { Modal, Pressable, View } from "react-native";
+import { AccessibilityInfo, Modal, Pressable, View } from "react-native";
 import tw from "twrnc";
 import ProgressRing from "./progress-ring";
 
@@ -33,14 +33,21 @@ export default function WaterLogModal({
       transparent
       animationType="slide"
       onRequestClose={onClose}
+      accessibilityViewIsModal
     >
-      <Pressable style={tw`flex-1 justify-end bg-black/40`} onPress={onClose}>
+      <Pressable
+        style={tw`flex-1 justify-end bg-black/40`}
+        onPress={onClose}
+        accessibilityLabel="Close water intake dialog"
+        accessibilityRole="button"
+      >
         <Pressable
           onPress={() => {}}
           style={[
             tw`rounded-t-3xl p-5 border-t`,
             { backgroundColor: sheetBgColor, borderColor },
           ]}
+          accessibilityRole="none"
         >
           <View style={tw`items-center mb-4`}>
             <ThemedText type="defaultSemiBold" style={tw`text-lg`}>
@@ -81,7 +88,14 @@ export default function WaterLogModal({
                 <Pressable
                   key={amount}
                   style={tw`bg-blue-600 rounded-xl px-5 py-4 flex-1 mx-1 items-center`}
-                  onPress={() => onAddWater(amount)}
+                  onPress={() => {
+                    onAddWater(amount);
+                    AccessibilityInfo.announceForAccessibility(
+                      `Added ${amount} ounces. Total: ${currentOz + amount} ounces.`
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Add ${amount} ounces of water`}
                 >
                   <ThemedText style={tw`text-white font-semibold`}>
                     +{amount} oz
@@ -91,7 +105,12 @@ export default function WaterLogModal({
             </View>
           </View>
 
-          <Pressable style={tw`items-center py-3`} onPress={onClose}>
+          <Pressable
+            style={tw`items-center py-3`}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close water intake dialog"
+          >
             <ThemedText style={tw`text-base font-semibold opacity-70`}>
               Close
             </ThemedText>

@@ -54,6 +54,8 @@ export function QuickPicks({ onPress }: QuickPicksProps) {
               ]}
               onPress={pick.onPress}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={pick.label}
             >
               <Icon size={24} color={iconColor} />
               <ThemedText type="defaultSemiBold" style={tw`text-sm mt-2`}>

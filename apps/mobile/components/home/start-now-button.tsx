@@ -22,6 +22,8 @@ export function StartNowButton({ onPress }: StartNowButtonProps) {
         ]}
         onPress={onPress}
         activeOpacity={0.9}
+        accessibilityRole="button"
+        accessibilityLabel="Start now: Quick Workout, 1 minute"
       >
         <View style={tw`flex-row items-center justify-center gap-3 mb-1`}>
           <Play size={24} color={buttonTextColor} fill={buttonTextColor} />

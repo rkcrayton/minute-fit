@@ -14,7 +14,8 @@ Welcome to **Gotta Minute Fit Lab**. This guide is written for new developers jo
 6. [Architecture Overview](#6-architecture-overview)
 7. [Development Workflows](#7-development-workflows)
 8. [Testing](#8-testing)
-9. [Troubleshooting](#9-troubleshooting)
+9. [Accessibility](#9-accessibility)
+10. [Troubleshooting](#10-troubleshooting)
 
 ---
 
@@ -269,7 +270,81 @@ Integration tests that require a live database should be run against the running
 
 ---
 
-## 9. Troubleshooting
+## 9. Accessibility
+
+The mobile app has partial screen reader support. This section documents what has been implemented and what still needs to be done.
+
+### 9.1 What Has Been Implemented
+
+The following components have `accessibilityRole`, `accessibilityLabel`, and `accessibilityHint` props where relevant. Screen readers (VoiceOver on iOS, TalkBack on Android) will announce these correctly.
+
+| Component | What is covered |
+|---|---|
+| `app/(onboarding)/login.tsx` | All inputs labeled; button announces "Logging in" during load |
+| `app/(onboarding)/register.tsx` | All inputs labeled; button announces "Creating account" during load |
+| `components/home/next-workout-card.tsx` | Start button labeled with workout title |
+| `components/progress-ring.tsx` | Ring grouped as a single accessible element with value, unit, and max |
+| `components/workout-card.tsx` | Do Workout button labeled with workout title |
+| `components/home/start-now-button.tsx` | Button labeled with name and duration |
+| `components/home/quick-picks.tsx` | Each pick button labeled by name |
+| `components/home/greeting-header.tsx` | Streak row grouped as one readable element |
+| `components/home/recent-workouts.tsx` | Each workout row grouped with name, category, and duration |
+| `components/account/settings-option.tsx` | Row labeled and marked as a button |
+| `components/account/goal-cards.tsx` | Each card labeled with goal name and current value |
+| `components/account/account-header.tsx` | Avatar button labeled "Change profile photo" |
+| `components/account/health-permission-card.tsx` | Connect button labeled with platform name and state; stat cards labeled with values |
+| `components/tracking/stat-card.tsx` | Card and inner action button labeled with title, value, and goal |
+| `components/tracking/tracking-section.tsx` | Configure button labeled |
+| `components/tracking/water-log-modal.tsx` | Modal marked with `accessibilityViewIsModal`; quick-add and close buttons labeled; announces new total after water is added via `AccessibilityInfo.announceForAccessibility` |
+| `components/tracking/tracking-config-modal.tsx` | Modal marked with `accessibilityViewIsModal`; each switch labeled with stat name and description; save and cancel buttons labeled; announces saved stat count on save |
+
+### 9.2 What Still Needs to Be Implemented
+
+#### `AccessibilityInfo` event listener
+
+`AccessibilityInfo.addEventListener('screenReaderChanged', handler)` fires whenever the user turns a screen reader on or off. This lets the app adapt its behavior in real time — for example, skipping animations that don't add information, pre-expanding collapsed sections so the user doesn't have to discover them, or suppressing visual-only decorations that would clutter the focus order.
+
+None of these listeners have been added yet. The following components and screens are the highest priority:
+
+| Location | What to do when screen reader is enabled |
+|---|---|
+| `components/ui/collapsible.tsx` | Start expanded so the user doesn't have to discover the toggle |
+| `app/(tabs)/plan/index.tsx` | Expand any collapsed exercise sections by default |
+| `app/(tabs)/plan/edit.tsx` | Ensure drag-to-reorder UI falls back to accessible move buttons |
+| `app/(tabs)/scan/index.tsx` | Announce camera status and scan result availability |
+| `app/(tabs)/scan/results.tsx` | Announce when results finish loading |
+| `app/(tabs)/account/tracking.tsx` | Announce when a stat is toggled on or off |
+| Any screen with loading spinners | Announce loading start and completion instead of relying on the spinner being visible |
+
+**Pattern to follow** — add this to any component that needs to adapt:
+
+```tsx
+import { AccessibilityInfo } from "react-native";
+import { useEffect, useState } from "react";
+
+const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
+
+useEffect(() => {
+  AccessibilityInfo.isScreenReaderEnabled().then(setScreenReaderEnabled);
+  const sub = AccessibilityInfo.addEventListener(
+    "screenReaderChanged",
+    setScreenReaderEnabled
+  );
+  return () => sub.remove();
+}, []);
+```
+
+Then use `screenReaderEnabled` to branch behaviour (e.g. `if (screenReaderEnabled) setExpanded(true)`).
+
+#### Other outstanding gaps
+
+- **Font scaling** — all `Text` components use fixed `fontSize` values and ignore the OS large-text setting. Add `allowFontScaling` and `maxFontSizeMultiplier` to the `ThemedText` component in `components/themed-text.tsx` so it applies globally.
+- **Focus management in modals** — when `WaterLogModal` or `TrackingConfigModal` opens, focus is not explicitly moved to the modal. Use `AccessibilityInfo.setAccessibilityFocus` on the modal's first focusable element after it mounts.
+- **Accessibility tests** — none of the Jest/RNTL test suites include accessibility assertions. Where components have `accessibilityLabel` props, add a test that checks the label is present and correct (e.g. `expect(getByLabelText('Add 8 ounces of water')).toBeTruthy()`).
+
+---
+
+## 10. Troubleshooting
 
 ### API container exits immediately on startup
 
