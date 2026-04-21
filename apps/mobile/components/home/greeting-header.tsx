@@ -26,7 +26,11 @@ export function GreetingHeader({ userName, streakDays }: GreetingHeaderProps) {
       <ThemedText type="title" style={[tw`mb-2`, { color: textColor }]}>
         {getGreeting()}, {userName}
       </ThemedText>
-      <View style={tw`flex-row items-center gap-2`}>
+      <View
+        style={tw`flex-row items-center gap-2`}
+        accessible
+        accessibilityLabel={`${streakDays} day streak`}
+      >
         <Flame size={18} color={accentColor} fill={accentColor} />
         <ThemedText type="defaultSemiBold" style={tw`opacity-70`}>
           {streakDays} day streak

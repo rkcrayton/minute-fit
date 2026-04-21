@@ -138,6 +138,8 @@ export default function StatCard({
               <Pressable
                 style={styles.button}
                 onPress={onPressButton}
+                accessibilityRole="button"
+                accessibilityLabel={`${buttonLabel} for ${title}`}
               >
                 <ThemedText style={styles.buttonText}>{buttonLabel}</ThemedText>
               </Pressable>
@@ -147,15 +149,26 @@ export default function StatCard({
       </ThemedView>
     );
 
+  const cardA11yLabel = `${title}: ${formattedValue}${formattedGoal ? `, ${formattedGoal}` : ""}`;
+
   if (onPressCard) {
     return (
-      <Pressable onPress={onPressCard} style={styles.pressable}>
+      <Pressable
+        onPress={onPressCard}
+        style={styles.pressable}
+        accessibilityRole="button"
+        accessibilityLabel={cardA11yLabel}
+      >
         {cardContent}
       </Pressable>
     );
   }
 
-  return cardContent;
+  return (
+    <View accessible accessibilityLabel={cardA11yLabel}>
+      {cardContent}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

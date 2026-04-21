@@ -38,6 +38,8 @@ export function GoalCards({ goals }: GoalCardsProps) {
             ]}
             onPress={goal.onPress}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={`${goal.label}: ${goal.value}`}
           >
 
             {/* Chevron Icon  */}

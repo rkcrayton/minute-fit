@@ -62,6 +62,12 @@ export function HealthPermissionCard() {
         style={tw`flex-row items-center justify-between mb-4`}
         onPress={isAuthorized ? undefined : requestPermission}
         activeOpacity={isAuthorized ? 1 : 0.7}
+        accessibilityRole={isAuthorized ? "none" : "button"}
+        accessibilityLabel={
+          isAuthorized
+            ? `${Platform.OS === "ios" ? "Apple Health" : "Health Connect"}: Connected`
+            : `Connect ${Platform.OS === "ios" ? "Apple Health" : "Health Connect"}`
+        }
       >
         <View style={tw`flex-row items-center gap-3`}>
           {/* Icon circle — green when connected, red when not */}
@@ -123,6 +129,8 @@ export function HealthPermissionCard() {
               tw`flex-1 p-4 rounded-xl items-center`,
               { backgroundColor: statBgColor },
             ]}
+            accessible
+            accessibilityLabel={`Steps today: ${steps.toLocaleString()}`}
           >
             <Footprints size={22} color={accentColor} style={tw`mb-2`} />
             <ThemedText type="defaultSemiBold" style={tw`text-lg`}>
@@ -139,6 +147,8 @@ export function HealthPermissionCard() {
               tw`flex-1 p-4 rounded-xl items-center`,
               { backgroundColor: statBgColor },
             ]}
+            accessible
+            accessibilityLabel={`Calories burned today: ${activeEnergy.toLocaleString()}`}
           >
             <Flame size={22} color="#F97316" style={tw`mb-2`} />
             <ThemedText type="defaultSemiBold" style={tw`text-lg`}>

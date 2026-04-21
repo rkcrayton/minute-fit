@@ -22,6 +22,8 @@ export function SettingsOption({ label, onPress, isLast = false }: SettingsOptio
       ]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
       <ThemedText type="defaultSemiBold" style={tw`text-base`}>
         {label}

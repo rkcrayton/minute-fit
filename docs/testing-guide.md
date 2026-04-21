@@ -1,27 +1,70 @@
 # Testing Documentation - Minute Fit
 
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Running the Tests](#running-the-tests)
+3. [Backend Test Infrastructure](#backend-test-infrastructure)
+4. [Components and Services Under Test](#components-and-services-under-test)
+5. [Significant Test Case Descriptions](#significant-test-case-descriptions)
+6. [Coverage Thresholds](#coverage-thresholds)
+
+---
+
 ## Overview
 
-Minute Fit has two independent test suites:
+Minute Fit has two independent test suites - one for the FastAPI backend and one for the Expo React Native frontend. They are completely separate stacks with different runners, fixtures, and coverage goals.
 
 | Suite | Location | Runner | Total Tests |
 |---|---|---|---|
 | Backend API | `apps/api/tests/` | pytest | 194 |
 | Frontend Mobile | `apps/mobile/__tests__/` | Jest / React Native Testing Library | ~180 |
 
-Backend coverage is enforced at **85% minimum** via `pytest-cov`. The frontend suite covers rendering, hooks, context state, and service layer mocking.
+### Testing Philosophy
+
+- **Backend tests are the reliability gate.** The backend suite covers security-sensitive paths (auth, token rotation, data isolation) with both unit and integration tests. Coverage is enforced at **85% minimum** - a PR that drops below this threshold will fail CI.
+- **Frontend tests focus on behaviour, not pixels.** Components are tested through React Native Testing Library, which interacts with the rendered output the same way a user would. Snapshot tests are avoided; assertions target visible text, roles, and state changes instead.
+- **No mocks at the database layer on the backend.** Integration tests use an in-memory SQLite database with per-test transaction rollbacks rather than mocking SQLAlchemy. This catches SQL-level bugs that mock-based tests would miss.
+- **The frontend mocks at the network boundary.** All API calls in frontend tests are intercepted by Jest mocks - no real HTTP requests are made. This keeps the suite fast and deterministic without needing the backend running.
+
+### What Each Suite Covers
+
+**Backend** - authentication and token security, user registration and profile management, body scan upload and image validation, water logging, workout plan CRUD and LLM-based generation, end-to-end user workflows, and utility functions (body fat formula, image sanitization, exercise sync).
+
+**Frontend** - auth context state machine (login, logout, register, session restore), Axios interceptor logic (token injection, auto-refresh, retry on 401), service layer functions, health data hooks, and rendering/interaction tests for the main UI components.
+
+### Known Gaps
+
+- **No accessibility tests.** Components that received `accessibilityLabel` and `accessibilityRole` props are not yet verified in the test suite. See [Development Guide - Accessibility](development-guide.md#9-accessibility) for what still needs to be added.
+- **Frontend coverage is not enforced.** The frontend suite sits at ~65% and has no minimum threshold. High-churn screens like `plan/index.tsx` and `scan/index.tsx` are not covered.
+- **No visual regression tests.** UI appearance is not tested. Changes to themes or layout will not be caught automatically.
 
 ---
 
 ## Running the Tests
+
+The most common commands are available from the repo root via the Makefile - you do not need to `cd` into each app directory for everyday use.
+
+| Makefile command | What it does |
+|---|---|
+| `make test` | Run the full backend suite |
+| `make test-v` | Run the full backend suite with verbose output |
+| `make test-unit` | Run backend unit tests only |
+| `make test-integration` | Run backend integration tests only |
+| `make coverage` | Run backend tests and generate an HTML coverage report |
+| `make test-frontend` | Run the full frontend suite once |
+| `make test-frontend-watch` | Run frontend tests in watch mode |
+| `make coverage-frontend` | Run frontend tests and generate a coverage report |
+
+The raw commands are listed below for cases where you need more control (filtering by file, running a single test, etc.).
 
 ### Backend
 
 ```bash
 cd apps/api
 
-# Run all tests with coverage report
-python -m pytest tests/
+# Run all tests
+python -m pytest tests/ -v --tb=short
 
 # Run a specific file
 python -m pytest tests/integration/test_users.py
@@ -29,11 +72,17 @@ python -m pytest tests/integration/test_users.py
 # Run a specific test
 python -m pytest tests/integration/test_users.py::test_login_success
 
-# Run only unit tests
-python -m pytest tests/unit/
+# Unit tests only
+python -m pytest tests/unit/ -v
 
-# Run only integration tests
+# Integration tests only
 python -m pytest tests/integration/
+
+# End-to-end workflow tests only
+python -m pytest tests/integration/test_workflows.py -v
+
+# Coverage report (HTML - open htmlcov/index.html in a browser)
+python -m pytest tests/ --cov=app --cov-report=html
 ```
 
 ### Frontend
@@ -45,10 +94,13 @@ cd apps/mobile
 npx jest
 
 # Run with coverage
-npx jest --coverage
+npx jest --coverage --coverageDirectory=coverage
 
 # Run a specific file
-npx jest __tests__/contexts/auth.test.tsx
+npx jest __tests__/contexts/auth.test.tsx --verbose
+
+# Run all tests in a directory
+npx jest __tests__/contexts/ --verbose
 
 # Watch mode (re-runs on file change)
 npx jest --watch
@@ -283,76 +335,6 @@ Passes values that produce a zero or near-zero logarithm argument in the US Navy
 
 **`test_male_clamped_to_minimum`**
 Passes values that would compute a body fat below 3%. Asserts the return value is clamped to 3.0. Verifies the physiological minimum boundary.
-
----
-
-## Test Scripts
-
-### Backend - Full Suite
-
-```bash
-cd apps/api
-python -m pytest tests/ -v --tb=short
-```
-
-### Backend - Coverage Report (HTML)
-
-```bash
-cd apps/api
-python -m pytest tests/ --cov=app --cov-report=html
-# Open htmlcov/index.html in a browser
-```
-
-### Backend - Only Fast Unit Tests
-
-```bash
-cd apps/api
-python -m pytest tests/unit/ -v
-```
-
-### Backend - Only End-to-End Workflows
-
-```bash
-cd apps/api
-python -m pytest tests/integration/test_workflows.py -v
-```
-
-### Frontend - Full Suite with Coverage
-
-```bash
-cd apps/mobile
-npx jest --coverage --coverageDirectory=coverage
-```
-
-### Frontend - Single Component
-
-```bash
-cd apps/mobile
-npx jest __tests__/components/today-progress.test.tsx --verbose
-```
-
-### Frontend - All Context Tests
-
-```bash
-cd apps/mobile
-npx jest __tests__/contexts/ --verbose
-```
-
-### Run Both Suites (from repo root)
-
-```bash
-# Backend
-cd apps/api && python -m pytest tests/ -q && cd ../..
-
-# Frontend
-cd apps/mobile && npx jest --passWithNoTests && cd ../..
-```
-
-Or using the Makefile if configured:
-
-```bash
-make test
-```
 
 ---
 
