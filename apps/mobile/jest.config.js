@@ -7,6 +7,7 @@ module.exports = {
     '^twrnc$': '<rootDir>/__mocks__/twrnc.ts',
     '^lucide-react-native$': '<rootDir>/__mocks__/lucide-react-native.tsx',
     '^react-native-svg$': '<rootDir>/__mocks__/react-native-svg.tsx',
+    '^react-native-health-connect$': '<rootDir>/__mocks__/react-native-health-connect.ts',
   },
   collectCoverageFrom: [
     'services/**/*.{ts,tsx}',

@@ -250,3 +250,53 @@ def test_measurement_image_not_found(client, auth_headers, db, test_user):
 def test_measurement_image_unauthenticated(client):
     r = client.get("/scan/measurement-images/some-sess/front")
     assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# GET /scan/history
+# ---------------------------------------------------------------------------
+
+def test_get_history_unauthenticated(client):
+    r = client.get("/scan/history")
+    assert r.status_code == 401
+
+
+def test_get_history_empty(client, auth_headers):
+    r = client.get("/scan/history", headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json() == []
+
+
+def test_get_history_returns_own_scans(client, auth_headers, db, test_user):
+    _insert_scan(db, test_user.id, "a0000000-0000-4000-a000-000000000001")
+    _insert_scan(db, test_user.id, "a0000000-0000-4000-a000-000000000002")
+    r = client.get("/scan/history", headers=auth_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data) == 2
+    session_ids = {item["session_id"] for item in data}
+    assert "a0000000-0000-4000-a000-000000000001" in session_ids
+    assert "a0000000-0000-4000-a000-000000000002" in session_ids
+
+
+def test_get_history_response_shape(client, auth_headers, db, test_user):
+    _insert_scan(db, test_user.id, "b0000000-0000-4000-a000-000000000001")
+    r = client.get("/scan/history", headers=auth_headers)
+    assert r.status_code == 200
+    item = r.json()[0]
+    assert "session_id" in item
+    assert "created_at" in item
+    assert "health_category" in item
+    assert "health_risk_level" in item
+    assert "body_fat_percentage" in item
+    assert "bmi" in item
+
+
+def test_get_history_excludes_other_users_scans(client, auth_headers, db, test_user, complete_user):
+    _insert_scan(db, test_user.id, "c0000000-0000-4000-a000-000000000001")
+    _insert_scan(db, complete_user.id, "c0000000-0000-4000-a000-000000000002")
+    r = client.get("/scan/history", headers=auth_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data) == 1
+    assert data[0]["session_id"] == "c0000000-0000-4000-a000-000000000001"

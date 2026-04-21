@@ -6,7 +6,7 @@ import {
   RotateCcw,
   User,
 } from "lucide-react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -14,9 +14,32 @@ import {
   ScrollView,
   View,
 } from "react-native";
+import { router } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { useScanCapture, STEPS } from "@/hooks/use-scan-capture";
+import { getScanHistory, type ScanHistoryItem } from "@/services/scan";
+
+const RISK_COLOR: Record<string, string> = {
+  low: "#22c55e",
+  moderate: "#f59e0b",
+  high: "#ef4444",
+};
+
+const CATEGORY_COLOR: Record<string, string> = {
+  Athletic: "#22c55e",
+  Fit: "#22c55e",
+  Acceptable: "#f59e0b",
+  Obese: "#ef4444",
+};
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function ScanCaptureScreen() {
   const {
@@ -32,6 +55,16 @@ export default function ScanCaptureScreen() {
     handleNext,
     goToStep,
   } = useScanCapture();
+
+  const [history, setHistory] = useState<ScanHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  useEffect(() => {
+    getScanHistory()
+      .then(setHistory)
+      .catch(() => {})
+      .finally(() => setHistoryLoading(false));
+  }, []);
 
   const bg = useThemeColor({}, "background");
   const surface = useThemeColor({}, "surface");
@@ -304,6 +337,68 @@ export default function ScanCaptureScreen() {
           </Pressable>
         </View>
       </View>
+
+      {/* Past Scans */}
+      {(historyLoading || history.length > 0) && (
+        <View style={{ marginTop: 32 }}>
+          <ThemedText
+            type="defaultSemiBold"
+            style={{ fontSize: 12, opacity: 0.5, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}
+          >
+            Past Scans
+          </ThemedText>
+
+          {historyLoading ? (
+            <ActivityIndicator style={{ marginTop: 8 }} />
+          ) : (
+            <View style={{ borderWidth: 1, borderColor: border, borderRadius: 14, overflow: "hidden" }}>
+              {history.map((scan, index) => (
+                <Pressable
+                  key={scan.session_id}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/scan/results",
+                      params: { sessionId: scan.session_id },
+                    })
+                  }
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    backgroundColor: pressed ? surfaceElevated : surface,
+                    borderBottomWidth: index < history.length - 1 ? 1 : 0,
+                    borderBottomColor: border,
+                  })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Scan from ${formatDate(scan.created_at)}, ${scan.health_category}, ${scan.body_fat_percentage?.toFixed(1)}% body fat`}
+                >
+                  <View style={{ flex: 1 }}>
+                    <ThemedText type="defaultSemiBold" style={{ fontSize: 14, marginBottom: 2 }}>
+                      {formatDate(scan.created_at)}
+                    </ThemedText>
+                    <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                      <ThemedText
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "700",
+                          color: CATEGORY_COLOR[scan.health_category] ?? textSecondary,
+                        }}
+                      >
+                        {scan.health_category}
+                      </ThemedText>
+                      <ThemedText style={{ fontSize: 12, color: textSecondary }}>
+                        {scan.body_fat_percentage?.toFixed(1)}% body fat · BMI {scan.bmi?.toFixed(1)}
+                      </ThemedText>
+                    </View>
+                  </View>
+                  <ChevronRight size={16} color={textSecondary} />
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }

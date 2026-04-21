@@ -1,4 +1,12 @@
-import { analyzeScan, type ScanAnalyzeResponse } from '@/services/scan';
+import { analyzeScan, getScanHistory, type ScanAnalyzeResponse, type ScanHistoryItem } from '@/services/scan';
+
+jest.mock('@/services/api', () => ({
+  __esModule: true,
+  default: { get: jest.fn() },
+}));
+
+import api from '@/services/api';
+const mockedApi = api as jest.Mocked<typeof api>;
 
 // ─── Test doubles ─────────────────────────────────────────────────────────────
 
@@ -226,5 +234,51 @@ describe('analyzeScan — image field construction', () => {
 
     const frontCall = capturedAppendCalls.find((c) => c.key === 'front')!;
     expect(frontCall.value.name).toBe('front.jpg');
+  });
+});
+
+// ─── getScanHistory ───────────────────────────────────────────────────────────
+
+const MOCK_HISTORY: ScanHistoryItem[] = [
+  {
+    session_id: 'aaa-111',
+    created_at: '2026-04-20T10:00:00Z',
+    health_category: 'Fit',
+    health_risk_level: 'low',
+    body_fat_percentage: 14.0,
+    bmi: 22.5,
+  },
+  {
+    session_id: 'bbb-222',
+    created_at: '2026-03-15T09:00:00Z',
+    health_category: 'Acceptable',
+    health_risk_level: 'moderate',
+    body_fat_percentage: 22.0,
+    bmi: 25.1,
+  },
+];
+
+describe('getScanHistory', () => {
+  it('calls GET /scan/history and returns the response data', async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: MOCK_HISTORY });
+
+    const result = await getScanHistory();
+
+    expect(mockedApi.get).toHaveBeenCalledWith('/scan/history');
+    expect(result).toEqual(MOCK_HISTORY);
+  });
+
+  it('returns an empty array when the server returns no scans', async () => {
+    mockedApi.get.mockResolvedValueOnce({ data: [] });
+
+    const result = await getScanHistory();
+
+    expect(result).toEqual([]);
+  });
+
+  it('propagates errors thrown by the API client', async () => {
+    mockedApi.get.mockRejectedValueOnce(new Error('Network error'));
+
+    await expect(getScanHistory()).rejects.toThrow('Network error');
   });
 });

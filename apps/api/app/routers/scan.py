@@ -376,6 +376,31 @@ def analyze_body(
     return result
 
 
+@router.get("/history")
+def get_scan_history(
+    current_user: User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return a summary list of all scans for the current user, newest first."""
+    scans = (
+        db.query(ScanResult)
+        .filter(ScanResult.user_id == current_user.id)
+        .order_by(ScanResult.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "session_id": s.session_id,
+            "created_at": s.created_at,
+            "health_category": s.health_category,
+            "health_risk_level": s.health_risk_level,
+            "body_fat_percentage": s.body_fat_percentage,
+            "bmi": s.bmi,
+        }
+        for s in scans
+    ]
+
+
 @router.get("/results/{session_id}")
 def get_scan_results(
     session_id: str,

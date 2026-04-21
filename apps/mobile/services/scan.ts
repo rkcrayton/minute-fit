@@ -1,3 +1,19 @@
+import api from "@/services/api";
+
+export type ScanHistoryItem = {
+  session_id: string;
+  created_at: string;
+  health_category: string;
+  health_risk_level: string;
+  body_fat_percentage: number;
+  bmi: number;
+};
+
+export async function getScanHistory(): Promise<ScanHistoryItem[]> {
+  const res = await api.get<ScanHistoryItem[]>("/scan/history");
+  return res.data;
+}
+
 export type ScanAnalyzeResponse = {
   session_id: string;
   measurements: Record<string, number>;
