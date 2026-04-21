@@ -1,6 +1,6 @@
 # GottaMinute Fitness User Guide
 
-Welcome to **GottaMinute Fitness**. This guide walks you through every feature in the app, how to use each one, and how the pieces fit together.
+Welcome to **GottaMinute Fitness**. This guide walks you through every feature in the app, how to use each one, and how the pieces fit together..
 
 ---
 
