@@ -47,16 +47,16 @@ minute-fit/
 ### Backend Environment Variables
 
 | Variable                   | Required   | Description                                                        | Example                                                        |
-| -------------------------- | ---------- | ------------------------------------------------------------------ | -------------------------------------------------------------- |
+| -------------------------- | ---------- | ------------------------------------------------------------------ |----------------------------------------------------------------|
 | `SECRET_KEY`               | Yes        | JWT signing key. Minimum 32 characters.                            | `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
 | `DATABASE_URL`             | Local only | Full PostgreSQL connection string.                                 | `postgresql://postgres:pass@db:5432/gotta_minute_fitness`      |
-| `INSTANCE_CONNECTION_NAME` | Cloud Run  | Cloud SQL instance path. Takes priority over DATABASE_URL.         | `gottaminutefit:us-central1:minute-fit-db`                     |
-| `DB_USER`                  | Cloud Run  | Cloud SQL username.                                                | `postgres`                                                     |
-| `DB_PASS`                  | Cloud Run  | Cloud SQL password.                                                | Gottaminutefit                                                 |
-| `DB_NAME`                  | Cloud Run  | Cloud SQL database name.                                           | `gotta_minute_fitness`                                         |
-| `GEMINI_API_KEY`           | No*        | Google Gemini API key for AI workout generation and scan insights. | `AIza...`                                                      |
+| `INSTANCE_CONNECTION_NAME` | Cloud Run  | Cloud SQL instance path. Takes priority over DATABASE_URL.         | `Cloudsqlinstance`                                             |
+| `DB_USER`                  | Cloud Run  | Cloud SQL username.                                                | `DBUser`                                                       |
+| `DB_PASS`                  | Cloud Run  | Cloud SQL password.                                                | Password                                                       |
+| `DB_NAME`                  | Cloud Run  | Cloud SQL database name.                                           | `DB Name`                                                      |
+| `GEMINI_API_KEY`           | No*        | Google Gemini API key for AI workout generation and scan insights. | `API`                                                          |
 | `GEMINI_MODEL`             | No         | Gemini model to use.                                               | `gemini-2.5-flash-lite` (default)                              |
-| `ADMIN_API_TOKEN`          | No*        | Token for admin endpoints (exercise sync). Pick any strong string. | `Gottaminadmin2026`                                            |
+| `ADMIN_API_TOKEN`          | No*        | Token for admin endpoints (exercise sync). Pick any strong string. | `ADMINKEY`                                                     |
 | `ALLOWED_ORIGINS`          | No         | Comma-separated CORS origins.                                      | `https://your-app.com`                                         |
 | `PORT`                     | No         | Server port.                                                       | `8080` (default)                                               |
 
@@ -105,9 +105,9 @@ Create `.env` in the project root:
 ```env
 SECRET_KEY=your-secret-key-at-least-32-characters-long
 DATABASE_URL=postgresql://postgres:your_secure_password_123@db:5432/gotta_minute_fitness
-POSTGRES_USER=postgres
+POSTGRES_USER=DB USER
 POSTGRES_PASSWORD=your_secure_password_123
-POSTGRES_DB=gotta_minute_fitness
+POSTGRES_DB=DB NAME
 POSTGRES_PORT=5432
 API_PORT=8080
 ADMIN_API_TOKEN=local-dev-sync-token
@@ -250,7 +250,7 @@ The API resolves the database URL in this order:
 
 2. **`DATABASE_URL`** -- Explicit connection string (Docker Compose / local)
    ```
-   postgresql://postgres:password@db:5432/gotta_minute_fitness
+   postgresql://postgres:password@db:5432/DB NAME
    ```
 
 3. **Fallback** -- Localhost with DB_USER/DB_PASS/DB_NAME

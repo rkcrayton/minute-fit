@@ -43,6 +43,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  avatarVersion: number;
   login: (username: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -56,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [avatarVersion, setAvatarVersion] = useState(0);
 
   // On app startup, check if we have a saved token
   useEffect(() => {
@@ -129,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       headers: { "Content-Type": "multipart/form-data" },
     });
     setUser(res.data);
+    setAvatarVersion((v) => v + 1);
   }
 
   async function logout() {
@@ -148,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, updateProfile, uploadAvatar }}>
+    <AuthContext.Provider value={{ user, token, isLoading, avatarVersion, login, register, logout, updateProfile, uploadAvatar }}>
       {children}
     </AuthContext.Provider>
   );

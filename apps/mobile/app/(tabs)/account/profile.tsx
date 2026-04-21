@@ -24,12 +24,12 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 type GenderOption = "male" | "female" | "neutral";
 
 export default function ProfileEditScreen() {
-  const { user, token, updateProfile } = useAuth();
+  const { user, token, updateProfile, avatarVersion } = useAuth();
   const { showPicker, uploading } = useAvatarPicker();
   const backgroundColor = useThemeColor({}, "background");
 
   const avatarSource = user?.profile_picture
-    ? { uri: `${getBaseURL()}/users/me/avatar`, headers: { Authorization: `Bearer ${token}` } }
+    ? { uri: `${getBaseURL()}/users/me/avatar?v=${avatarVersion}`, headers: { Authorization: `Bearer ${token}` } }
     : require("@/assets/images/Todo.png");
 
   // Convert stored height (total inches) back to feet + inches for display

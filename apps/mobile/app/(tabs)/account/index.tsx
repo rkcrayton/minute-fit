@@ -10,14 +10,14 @@ import { getBaseURL } from "@/services/api";
 import tw from "twrnc";
 
 export default function AccountScreen() {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, avatarVersion } = useAuth();
   const backgroundColor = useThemeColor({}, "background");
   const { setOnboarded } = useOnboarding();
   const { steps, activeEnergy, isAuthorized } = useHealthData();
   const { showPicker } = useAvatarPicker();
 
   const avatarImage = user?.profile_picture
-    ? { uri: `${getBaseURL()}/users/me/avatar`, headers: { Authorization: `Bearer ${token}` } }
+    ? { uri: `${getBaseURL()}/users/me/avatar?v=${avatarVersion}`, headers: { Authorization: `Bearer ${token}` } }
     : require("@/assets/images/Todo.png");
 
   // Goal cards pull real data from HealthKit when connected,
