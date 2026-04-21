@@ -25,6 +25,8 @@ Welcome to **GottaMinute Fitness**. This guide walks you through every feature i
 
 ## 1. Quick Tour
 
+![Landing page](userguideimages/landingpage.png)
+
 Once you sign in, you move between the app from four tabs at the bottom:
 
 | Tab | What You Do Here |
@@ -42,7 +44,13 @@ Once you sign in, you move between the app from four tabs at the bottom:
 
 1. Open the app. First-time users land on the welcome screen.
 2. Tap **Create account** and enter your email, a username, and a password + confirmed password.
+
+![Create account form](userguideimages/createaccount.png)
+
 3. Fill in the short profile form: first and last name, height (feet + inches), weight (lbs), age, and gender.
+
+![About you form](userguideimages/aboutyou.png)
+
 4. You are signed in automatically after account creation.
 
 ### 2.2 Logging In Again
@@ -52,6 +60,8 @@ Returning users tap **Log in** on the welcome screen and enter their username an
 ---
 
 ## 3. Profile and Avatar
+
+![Account page](userguideimages/accountpage.png)
 
 ### 3.1 Updating Your Profile
 
@@ -74,6 +84,8 @@ Tap your avatar at the top of the **Account** tab to pick a new photo from your 
 ---
 
 ## 4. Home Dashboard
+
+![Home page](userguideimages/homepage.png)
 
 The Home tab is the first screen after login. It is built to show the user the immediate information they need.
 
@@ -100,6 +112,8 @@ Use the **Scan** tab to analyze your body composition from three photos.
 
 ### 5.1 Taking a Scan
 
+![Scan input screen](userguideimages/scaninput.png)
+
 1. Open the **Scan** tab. The flow walks you through three steps: **Front**, **Side**, **Back**.
 2. For each step, tap **Camera** to take a photo or **Library** to pick an existing one.
 3. A progress bar at the top shows which photos are captured. You can retake any photo before moving on.
@@ -108,6 +122,8 @@ Use the **Scan** tab to analyze your body composition from three photos.
 > **Tip:** use consistent lighting, a plain background, fitted clothing, and stand with arms slightly away from your body for the best results.
 
 ### 5.2 What You Get Back
+
+![Scan results](userguideimages/scanresults.png)
 
 - **Body measurements** (inches): neck, shoulders, waist, hip, thigh, knee, calf, ankle.
 - **Body composition**: BMI, body-fat percentage, fat mass, lean mass, waist-to-hip ratio.
@@ -136,12 +152,16 @@ You always have exactly **one workout plan** at a time, and you can regenerate i
 
 ### 6.2 Viewing the Plan
 
+![Plan page](userguideimages/planpage.png)
+
 - The Plan tab shows all seven days as collapsible cards.
 - **Today** is highlighted and expanded by default.
 - Days without exercises show a **Rest** badge.
 - Each exercise displays its muscle group, reps-per-day, and duration.
 
 ### 6.3 Editing the Plan
+
+![Customize plan](userguideimages/customizeplan.png)
 
 1. Tap **Edit** on the Plan tab.
 2. Pick a day from the row of day tabs.
@@ -157,6 +177,8 @@ You always have exactly **one workout plan** at a time, and you can regenerate i
 ---
 
 ## 7. Workout Runner
+
+![Workout timer](userguideimages/workouttimer.png)
 
 The runner is the screen that actually runs a workout.
 
@@ -178,6 +200,8 @@ The runner is the screen that actually runs a workout.
 
 ## 8. Exercise Library
 
+![Exercise library](userguideimages/exerciselibrary.png)
+
 The library is the catalog of exercises the Plan editor and the AI generator draw from. It appears as a search sheet whenever you tap **+ Add exercise** in the Plan editor.
 
 ### 8.1 Searching
@@ -188,6 +212,8 @@ The library is the catalog of exercises the Plan editor and the AI generator dra
 ---
 
 ## 9. Water Tracking
+
+![Water intake logger](userguideimages/waterintake.png)
 
 ### 9.1 Logging Water
 
