@@ -1,6 +1,6 @@
-# Minute Fit — User Guide
+# GottaMinute Fitness User Guide
 
-Welcome to **Gotta Minute Fit Lab**. This guide walks you through every feature in the app, how to use each one, and how the pieces fit together. No technical knowledge is required — it is written for the people using the app, not the people building it.
+Welcome to **GottaMinute Fitness**. This guide walks you through every feature in the app, how to use each one, and how the pieces fit together.
 
 ---
 
@@ -79,12 +79,12 @@ The Home tab is the first screen after login. It is built to show the user the i
 
 ### 4.1 What You See
 
-- **Greeting + streak** — your name and how many days in a row you have trained.
-- **Next Workout card** — the next exercise due today. Tap **Start** to jump into it.
-- **Today's Progress** — how many workouts you have completed today versus your daily goal.
-- **Daily Tracking tiles** — configurable stats such as Steps, Water, Calories, and Sleep.
-- **Quick Picks** — shortcut chips that jump to the Plan tab.
-- **Recent Workouts** — your last three completed sessions.
+- **Greeting + streak**: your name and how many days in a row you have trained.
+- **Next Workout card**: the next exercise due today. Tap **Start** to jump into it.
+- **Today's Progress**: how many workouts you have completed today versus your daily goal.
+- **Daily Tracking tiles**: configurable stats such as Steps, Water, Calories, and Sleep.
+- **Quick Picks**: shortcut chips that jump to the Plan tab.
+- **Recent Workouts**: your last three completed sessions.
 
 ### 4.2 How It Connects to the Rest of the App
 
@@ -111,7 +111,7 @@ Use the **Scan** tab to analyze your body composition from three photos.
 
 - **Body measurements** (inches): neck, shoulders, waist, hip, thigh, knee, calf, ankle.
 - **Body composition**: BMI, body-fat percentage, fat mass, lean mass, waist-to-hip ratio.
-- **Health category**: Athletic, Fit, Acceptable, or Obese — each with a short recommendation.
+- **Health category**: Athletic, Fit, Acceptable, or Obese, each with a short recommendation.
 - **AI insights**: a plain-language summary with two or three tailored next-step suggestions.
 
 ### 5.3 How Scans Connect to Other Features
@@ -129,7 +129,7 @@ You always have exactly **one workout plan** at a time, and you can regenerate i
 ### 6.1 Generating a Plan
 
 1. Open the **Plan** tab. If you have no plan, the generator form opens automatically. Otherwise, tap **Regenerate**.
-2. Pick **days per week** (3–7) and **minutes per session** (15–60).
+2. Pick **days per week** (3 to 7) and **minutes per session** (15 to 60).
 3. Check the equipment you have: Bodyweight, Dumbbell, Barbell, Machine, or Band.
 4. Optionally list exercises to avoid and a goal override (e.g. "build endurance").
 5. Tap **Generate**. The AI builds a plan tuned to your profile, your latest scan, and your equipment.
@@ -229,7 +229,7 @@ The Home screen shows a grid of tiles. You choose which ones appear.
 
 ### 10.2 Adaptive Step Goal
 
-Your step goal is **adaptive** — the app looks at your last seven days and sets a realistic target.
+Your step goal is **adaptive**. The app looks at your last seven days and sets a realistic target.
 
 > **Tip:** if Health access is not granted, tiles show `--` and a **Connect Health** button appears. Tapping it opens the permission screen described in [§11](#11-health-app-connection).
 
@@ -245,7 +245,7 @@ Your step goal is **adaptive** — the app looks at your last seven days and set
 
 ### 11.2 What Gets Read
 
-The app reads — but never writes — the following categories:
+The app reads (but never writes) the following categories:
 
 - Step count
 - Active energy burned (calories)
@@ -255,7 +255,7 @@ The app reads — but never writes — the following categories:
 - Resting heart rate
 - Sleep analysis
 
-> **Important:** health data stays on your phone. Minute Fit does not upload it to the backend — it is displayed locally only.
+> **Important:** health data stays on your phone. GottaMinute Fitness does not upload it to the backend. It is displayed locally only.
 
 ---
 
@@ -263,12 +263,12 @@ The app reads — but never writes — the following categories:
 
 The **Account** tab is the hub for everything personal:
 
-- **Avatar** — tap to change
-- **Goal cards** — quick read-outs of today's steps and calories from your health app
+- **Avatar**: tap to change
+- **Goal cards**: quick read-outs of today's steps and calories from your health app
 - **Preferences & Settings**:
-  - Daily Tracking — pick which tiles show on Home ([§10](#10-daily-tracking-tiles))
-  - Health — connect Apple Health / Health Connect ([§11](#11-health-app-connection))
-  - Profile Info — edit your name, age, weight, height, gender, fitness goal
+  - Daily Tracking: pick which tiles show on Home ([§10](#10-daily-tracking-tiles))
+  - Health: connect Apple Health / Health Connect ([§11](#11-health-app-connection))
+  - Profile Info: edit your name, age, weight, height, gender, fitness goal
   - Log out
 
 > **Note:** a few items in the settings list (Focus Mode, Workouts/Week, Duration, Exercise Variability, Payment Method, My Gear, Subscription) are placeholders for future releases.
@@ -277,7 +277,7 @@ The **Account** tab is the hub for everything personal:
 
 ## 13. External Services
 
-You do not need to "turn these on" — they work behind the scenes. Here is what each one does so you know where your results come from.
+You do not need to "turn these on". They work behind the scenes. Here is what each one does so you know where your results come from.
 
 | Service | What It Does for You |
 |---|---|
@@ -285,13 +285,13 @@ You do not need to "turn these on" — they work behind the scenes. Here is what
 | Google Gemini (AI) | Writes the plain-language insights on your scan results and generates your personalized workout plans |
 | MediaPipe (pose detection) | Measures your body from the three scan photos so the app can estimate circumferences and body-fat percentage |
 
-> **Note:** if the AI service is ever unavailable, scans still work — you see the measurements and health category, just without the AI summary paragraph.
+> **Note:** if the AI service is ever unavailable, scans still work. You see the measurements and health category, just without the AI summary paragraph.
 
 ---
 
 ## 14. A Typical Day
 
-1. Open the app — Home shows today's Next Workout, progress ring, and your tiles.
+1. Open the app. Home shows today's Next Workout, progress ring, and your tiles.
 2. Tap **Start** on the Next Workout card.
 3. Run the countdown timer. Home refreshes with your new progress and streak.
 4. Tap the **Water** tile a few times during the day to log intake.
