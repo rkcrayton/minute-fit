@@ -25,7 +25,7 @@ Welcome to **GottaMinute Fitness**. This guide walks you through every feature i
 
 ## 1. Quick Tour
 
-![Landing page](userguideimages/landingpage.png)
+<img src="userguideimages/landingpage.png" alt="Landing page" height="300" />
 
 Once you sign in, you move between the app from four tabs at the bottom:
 
@@ -45,11 +45,11 @@ Once you sign in, you move between the app from four tabs at the bottom:
 1. Open the app. First-time users land on the welcome screen.
 2. Tap **Create account** and enter your email, a username, and a password + confirmed password.
 
-![Create account form](userguideimages/createaccount.png)
+<img src="userguideimages/createaccount.png" alt="Create account form" height="300" />
 
 3. Fill in the short profile form: first and last name, height (feet + inches), weight (lbs), age, and gender.
 
-![About you form](userguideimages/aboutyou.png)
+<img src="userguideimages/aboutyou.png" alt="About you form" height="300" />
 
 4. You are signed in automatically after account creation.
 
@@ -61,7 +61,7 @@ Returning users tap **Log in** on the welcome screen and enter their username an
 
 ## 3. Profile and Avatar
 
-![Account page](userguideimages/accountpage.png)
+<img src="userguideimages/accountpage.png" alt="Account page" height="300" />
 
 ### 3.1 Updating Your Profile
 
@@ -85,7 +85,7 @@ Tap your avatar at the top of the **Account** tab to pick a new photo from your 
 
 ## 4. Home Dashboard
 
-![Home page](userguideimages/homepage.png)
+<img src="userguideimages/homepage.png" alt="Home page" height="300" />
 
 The Home tab is the first screen after login. It is built to show the user the immediate information they need.
 
@@ -112,7 +112,7 @@ Use the **Scan** tab to analyze your body composition from three photos.
 
 ### 5.1 Taking a Scan
 
-![Scan input screen](userguideimages/scaninput.png)
+<img src="userguideimages/scaninput.png" alt="Scan input screen" height="300" />
 
 1. Open the **Scan** tab. The flow walks you through three steps: **Front**, **Side**, **Back**.
 2. For each step, tap **Camera** to take a photo or **Library** to pick an existing one.
@@ -123,7 +123,7 @@ Use the **Scan** tab to analyze your body composition from three photos.
 
 ### 5.2 What You Get Back
 
-![Scan results](userguideimages/scanresults.png)
+<img src="userguideimages/scanresults.png" alt="Scan results" height="300" />
 
 - **Body measurements** (inches): neck, shoulders, waist, hip, thigh, knee, calf, ankle.
 - **Body composition**: BMI, body-fat percentage, fat mass, lean mass, waist-to-hip ratio.
@@ -152,7 +152,7 @@ You always have exactly **one workout plan** at a time, and you can regenerate i
 
 ### 6.2 Viewing the Plan
 
-![Plan page](userguideimages/planpage.png)
+<img src="userguideimages/planpage.png" alt="Plan page" height="300" />
 
 - The Plan tab shows all seven days as collapsible cards.
 - **Today** is highlighted and expanded by default.
@@ -161,7 +161,7 @@ You always have exactly **one workout plan** at a time, and you can regenerate i
 
 ### 6.3 Editing the Plan
 
-![Customize plan](userguideimages/customizeplan.png)
+<img src="userguideimages/customizeplan.png" alt="Customize plan" height="300" />
 
 1. Tap **Edit** on the Plan tab.
 2. Pick a day from the row of day tabs.
@@ -178,7 +178,7 @@ You always have exactly **one workout plan** at a time, and you can regenerate i
 
 ## 7. Workout Runner
 
-![Workout timer](userguideimages/workouttimer.png)
+<img src="userguideimages/workouttimer.png" alt="Workout timer" height="300" />
 
 The runner is the screen that actually runs a workout.
 
@@ -200,7 +200,7 @@ The runner is the screen that actually runs a workout.
 
 ## 8. Exercise Library
 
-![Exercise library](userguideimages/exerciselibrary.png)
+<img src="userguideimages/exerciselibrary.png" alt="Exercise library" height="300" />
 
 The library is the catalog of exercises the Plan editor and the AI generator draw from. It appears as a search sheet whenever you tap **+ Add exercise** in the Plan editor.
 
@@ -213,7 +213,7 @@ The library is the catalog of exercises the Plan editor and the AI generator dra
 
 ## 9. Water Tracking
 
-![Water intake logger](userguideimages/waterintake.png)
+<img src="userguideimages/waterintake.png" alt="Water intake logger" height="300" />
 
 ### 9.1 Logging Water
 
