@@ -1,5 +1,5 @@
 # Testing Documentation - Minute Fit
-
+### Created by Brandon Nguyen
 ## Table of Contents
 
 1. [Overview](#overview)

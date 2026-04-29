@@ -1,5 +1,5 @@
 # Minute Fit — Developer Guide
-
+### Created by Everett Porter
 Welcome to **Gotta Minute Fit Lab**. This guide is written for new developers joining the project. It covers everything you need to understand the architecture, get your environment running, and contribute effectively from day one.
 
 ---
