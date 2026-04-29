@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		006A71A238C1A3E604461E21 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E8980D26AB6D239D5A73F2 /* ExpoModulesProvider.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		2920211D6E97A8F9F878CB0F /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00B29C428658B207CABAD74 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		AA249EB77237C8F0F702DA2D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 57618A387425F32418EE32C6 /* PrivacyInfo.xcprivacy */; };
-		B3679F1392C7B7C34613D0C1 /* libPods-GottaMinute.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 72FF9E56BC973D00190A2BBD /* libPods-GottaMinute.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		BBFBF9CC96A92FBE699E77CB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = EB9FAB3CB05F389B4163B6AD /* PrivacyInfo.xcprivacy */; };
+		C57426991106B6BCCD7D1E81 /* libPods-GottaMinute.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D5322730FF86EC4E02AE3BBF /* libPods-GottaMinute.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -20,13 +20,13 @@
 		13B07F961A680F5B00A75B9A /* GottaMinute.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GottaMinute.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = GottaMinute/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = GottaMinute/Info.plist; sourceTree = "<group>"; };
-		57618A387425F32418EE32C6 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = GottaMinute/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		72FF9E56BC973D00190A2BBD /* libPods-GottaMinute.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-GottaMinute.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		939E04F494F988FD4BDAC56E /* Pods-GottaMinute.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-GottaMinute.debug.xcconfig"; path = "Target Support Files/Pods-GottaMinute/Pods-GottaMinute.debug.xcconfig"; sourceTree = "<group>"; };
+		9FD8EA9303B088A0F6B69407 /* Pods-GottaMinute.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-GottaMinute.debug.xcconfig"; path = "Target Support Files/Pods-GottaMinute/Pods-GottaMinute.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = GottaMinute/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C00B29C428658B207CABAD74 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-GottaMinute/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		D3557B7288EE313E9A11D922 /* Pods-GottaMinute.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-GottaMinute.release.xcconfig"; path = "Target Support Files/Pods-GottaMinute/Pods-GottaMinute.release.xcconfig"; sourceTree = "<group>"; };
+		D0E8980D26AB6D239D5A73F2 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-GottaMinute/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		D5322730FF86EC4E02AE3BBF /* libPods-GottaMinute.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-GottaMinute.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9A8A53DFDCF1DC29C6959F5 /* Pods-GottaMinute.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-GottaMinute.release.xcconfig"; path = "Target Support Files/Pods-GottaMinute/Pods-GottaMinute.release.xcconfig"; sourceTree = "<group>"; };
+		EB9FAB3CB05F389B4163B6AD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = GottaMinute/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = GottaMinute/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* GottaMinute-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "GottaMinute-Bridging-Header.h"; path = "GottaMinute/GottaMinute-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B3679F1392C7B7C34613D0C1 /* libPods-GottaMinute.a in Frameworks */,
+				C57426991106B6BCCD7D1E81 /* libPods-GottaMinute.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,7 +53,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				57618A387425F32418EE32C6 /* PrivacyInfo.xcprivacy */,
+				EB9FAB3CB05F389B4163B6AD /* PrivacyInfo.xcprivacy */,
 			);
 			name = GottaMinute;
 			sourceTree = "<group>";
@@ -62,27 +62,9 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				72FF9E56BC973D00190A2BBD /* libPods-GottaMinute.a */,
+				D5322730FF86EC4E02AE3BBF /* libPods-GottaMinute.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		3E8B3D8FB086EC57EF226F62 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				939E04F494F988FD4BDAC56E /* Pods-GottaMinute.debug.xcconfig */,
-				D3557B7288EE313E9A11D922 /* Pods-GottaMinute.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		7E4D9D33F796C04DC00ACB90 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				B44AF31F7EAF5B42F35F48B6 /* GottaMinute */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -99,8 +81,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				3E8B3D8FB086EC57EF226F62 /* Pods */,
-				7E4D9D33F796C04DC00ACB90 /* ExpoModulesProviders */,
+				926AFDB1885FC7F4334444A2 /* Pods */,
+				F2991380EAFDED0AE7140906 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -115,12 +97,22 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		B44AF31F7EAF5B42F35F48B6 /* GottaMinute */ = {
+		84224DC215EDF20C975BBE56 /* GottaMinute */ = {
 			isa = PBXGroup;
 			children = (
-				C00B29C428658B207CABAD74 /* ExpoModulesProvider.swift */,
+				D0E8980D26AB6D239D5A73F2 /* ExpoModulesProvider.swift */,
 			);
 			name = GottaMinute;
+			sourceTree = "<group>";
+		};
+		926AFDB1885FC7F4334444A2 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				9FD8EA9303B088A0F6B69407 /* Pods-GottaMinute.debug.xcconfig */,
+				E9A8A53DFDCF1DC29C6959F5 /* Pods-GottaMinute.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -132,6 +124,14 @@
 			path = GottaMinute/Supporting;
 			sourceTree = "<group>";
 		};
+		F2991380EAFDED0AE7140906 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				84224DC215EDF20C975BBE56 /* GottaMinute */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "GottaMinute" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				465D97BFB511D84E489F6BDF /* [Expo] Configure project */,
+				366200369BCB8104AB227923 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				AC6CC4E2F3C9A9E9D6AD8DFD /* [CP] Embed Pods Frameworks */,
+				0E05F9B4E826B3FBD62EA3F1 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -166,8 +166,8 @@
 				LastUpgradeCheck = 1130;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						DevelopmentTeam = 8VDG7433ZB;
 						LastSwiftMigration = 1250;
+						DevelopmentTeam = "8VDG7433ZB";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -198,7 +198,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				AA249EB77237C8F0F702DA2D /* PrivacyInfo.xcprivacy in Resources */,
+				BBFBF9CC96A92FBE699E77CB /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,7 +244,29 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		465D97BFB511D84E489F6BDF /* [Expo] Configure project */ = {
+		0E05F9B4E826B3FBD62EA3F1 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-GottaMinute/Pods-GottaMinute-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-GottaMinute/Pods-GottaMinute-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		366200369BCB8104AB227923 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -306,28 +328,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-GottaMinute/Pods-GottaMinute-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		AC6CC4E2F3C9A9E9D6AD8DFD /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-GottaMinute/Pods-GottaMinute-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-GottaMinute/Pods-GottaMinute-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -336,7 +336,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				2920211D6E97A8F9F878CB0F /* ExpoModulesProvider.swift in Sources */,
+				006A71A238C1A3E604461E21 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -345,15 +345,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 939E04F494F988FD4BDAC56E /* Pods-GottaMinute.debug.xcconfig */;
+			baseConfigurationReference = 9FD8EA9303B088A0F6B69407 /* Pods-GottaMinute.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = GottaMinute/GottaMinute.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8VDG7433ZB;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -379,20 +376,20 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
+				DEVELOPMENT_TEAM = "8VDG7433ZB";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D3557B7288EE313E9A11D922 /* Pods-GottaMinute.release.xcconfig */;
+			baseConfigurationReference = E9A8A53DFDCF1DC29C6959F5 /* Pods-GottaMinute.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = GottaMinute/GottaMinute.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8VDG7433ZB;
 				INFOPLIST_FILE = GottaMinute/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -412,6 +409,9 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
+				DEVELOPMENT_TEAM = "8VDG7433ZB";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 			};
 			name = Release;
 		};
